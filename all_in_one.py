@@ -2,7 +2,7 @@
 **
 * @Author: Keyuan Wu
 * @Update: 04/26/2018
-* :Python 3.6.5
+* Python 3.6.5
 **
 '''
 import pandas as pd
