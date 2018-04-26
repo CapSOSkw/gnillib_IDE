@@ -2,7 +2,7 @@
 **
 * @Author: Keyuan Wu
 * @Update: 04/26/2018
-* : Can add drivers for new base
+*
 **
 '''
 import pandas as pd
@@ -85,21 +85,6 @@ class info_locker(object):
 
     queens_but_not_nass_zip = [11001, 11004, 11005, 11040]
 
-    clean_air_base = {
-        'BaseName': 'CLEAN AIR CAR SERVICE AND PARKING COR',
-        'BaseAddress': '13030 31ST AVENUE 8TH SUITE 801',
-        'City': 'FLUSHING',
-        'State': 'NY',
-        'zipcode': '11354',
-        'ETIN': 'AKEL',
-        'NPI': '1649684689',
-        'MedicaidProviderNum': '03563146',
-        'TaxID': '452765257',
-        'ContactName': 'FIONA',
-        'ContactTel': '7183581808',
-        'LocationCode': '003',
-    }
-
     NYSDOH = {
         'name': 'NYSDOH',
         'ETIN': 'EMEDNYBAT',
@@ -116,59 +101,6 @@ class info_locker(object):
         '276': '005010X212',
         '270': '005010X279A1'
     }
-
-    driver_info = {
-        'B62': {'FIRST NAME': 'Zhengang', 'LAST NAME': 'Lin', 'DRVER ID': 376527120, 'VEHICE ID': 'T748107C'},
-        'S66': {'FIRST NAME': 'Vivian', 'LAST NAME': 'Lu', 'DRVER ID': 688555566, 'VEHICE ID': 'T702310C'},
-        'S79': {'FIRST NAME': 'Tam', 'LAST NAME': 'Chi', 'DRVER ID': 459762968, 'VEHICE ID': 'T741538C'},
-        'S31': {'FIRST NAME': 'Ming', 'LAST NAME': 'Zhang', 'DRVER ID': 836271688, 'VEHICE ID': 'T697746C'},
-        'B09': {'FIRST NAME': 'JingJie', 'LAST NAME': 'Jin', 'DRVER ID': 892871012, 'VEHICE ID': 'T694547C'},
-        'B38': {'FIRST NAME': 'Woeiwong', 'LAST NAME': 'Wen', 'DRVER ID': 690924178, 'VEHICE ID': 'T702062C'},
-        'B9': {'FIRST NAME': 'JingJie', 'LAST NAME': 'Jin', 'DRVER ID': 892871012, 'VEHICE ID': 'T694547C'},
-        'S68': {'FIRST NAME': 'Huayong', 'LAST NAME': 'Li', 'DRVER ID': 237587334, 'VEHICE ID': 'T697863C'},
-        'B8': {'FIRST NAME': 'Wei', 'LAST NAME': 'Zhong', 'DRVER ID': 628084765, 'VEHICE ID': 'T689134C'},
-        'S81': {'FIRST NAME': 'Guosheng', 'LAST NAME': 'Yu', 'DRVER ID': 697155496, 'VEHICE ID': 'T758693C'},
-        'S05': {'FIRST NAME': 'Junzhi', 'LAST NAME': 'Chen', 'DRVER ID': 253956806, 'VEHICE ID': 'T705557C'},
-        'S49': {'FIRST NAME': 'Solis', 'LAST NAME': 'Clinton', 'DRVER ID': 403579560, 'VEHICE ID': 'T696710C'},
-        'G06': {'FIRST NAME': 'Rahman', 'LAST NAME': 'Mohammad', 'DRVER ID': 433374842, 'VEHICE ID': 'T697716C'},
-        'S27': {'FIRST NAME': 'Zhenkai', 'LAST NAME': 'Sun', 'DRVER ID': 990514509, 'VEHICE ID': 'T715230C'},
-        'S47': {'FIRST NAME': 'Guiquan', 'LAST NAME': 'Zhang', 'DRVER ID': 930106160, 'VEHICE ID': 'T698219C'},
-        'B08': {'FIRST NAME': 'Wei', 'LAST NAME': 'Zhong', 'DRVER ID': 628084765, 'VEHICE ID': 'T689134C'},
-        'S32': {'FIRST NAME': 'Michael', 'LAST NAME': 'Li', 'DRVER ID': 497800691, 'VEHICE ID': 'T697731C'},
-        'B37': {'FIRST NAME': 'ChaoLung', 'LAST NAME': 'Chang', 'DRVER ID': 848458063, 'VEHICE ID': 'T697547C'},
-        'S70': {'FIRST NAME': 'Tina', 'LAST NAME': 'Chen', 'DRVER ID': 104975130, 'VEHICE ID': 'T711650C'},
-        'S39': {'FIRST NAME': 'Junyi', 'LAST NAME': 'Chen', 'DRVER ID': 117380956, 'VEHICE ID': 'T697749C'},
-        'S46': {'FIRST NAME': 'Weicheng', 'LAST NAME': 'Zhao', 'DRVER ID': 849859984, 'VEHICE ID': 'T697866C'},
-        'S74': {'FIRST NAME': 'Jianwu', 'LAST NAME': 'Qi', 'DRVER ID': 733518919, 'VEHICE ID': 'T725365C'},
-        'S50': {'FIRST NAME': 'Gensheng', 'LAST NAME': 'Zhu', 'DRVER ID': 756798389, 'VEHICE ID': 'T694152C'},
-        'B69': {'FIRST NAME': 'Nicholas', 'LAST NAME': 'Ong', 'DRVER ID': 214959808, 'VEHICE ID': 'T763447C'},
-        'S22': {'FIRST NAME': 'Xiaojing', 'LAST NAME': 'Yu', 'DRVER ID': 481231326, 'VEHICE ID': 'T694698C'},
-        'S30': {'FIRST NAME': 'Zhongguang', 'LAST NAME': 'Guo', 'DRVER ID': 905777518, 'VEHICE ID': 'T694576C'},
-        'S41': {'FIRST NAME': 'Michael', 'LAST NAME': 'Wu', 'DRVER ID': 951722027, 'VEHICE ID': 'T697719C'},
-        'B12': {'FIRST NAME': 'Law', 'LAST NAME': 'Chi', 'DRVER ID': 715774432, 'VEHICE ID': 'T718177C'},
-        'S19': {'FIRST NAME': 'Cabarcas', 'LAST NAME': 'Gabriel', 'DRVER ID': 438210307, 'VEHICE ID': 'T702659C'},
-        'B68': {'FIRST NAME': 'Kamfong', 'LAST NAME': 'Chan', 'DRVER ID': 658480580, 'VEHICE ID': 'T650228C'},
-        'B42': {'FIRST NAME': 'Jing', 'LAST NAME': 'Hu', 'DRVER ID': 838151997, 'VEHICE ID': 'T725566C'},
-        'S42': {'FIRST NAME': 'Valdez', 'LAST NAME': 'Emmanue', 'DRVER ID': 967154330, 'VEHICE ID': 'T715642C'},
-        'S29': {'FIRST NAME': 'Chuen', 'LAST NAME': 'Lam', 'DRVER ID': 110994521, 'VEHICE ID': 'T698054C'},
-        'S35': {'FIRST NAME': 'Biqiu', 'LAST NAME': 'Nie ', 'DRVER ID': 365656500, 'VEHICE ID': 'T697829C'},
-        'G6': {'FIRST NAME': 'Rahman', 'LAST NAME': 'Mohammad', 'DRVER ID': 433374842, 'VEHICE ID': 'T697716C'},
-        'S45': {'FIRST NAME': 'Guoyuan', 'LAST NAME': 'Ding', 'DRVER ID': 727206171, 'VEHICE ID': 'T698060C'},
-        'G191': {'FIRST NAME': 'Kinkeung', 'LAST NAME': 'Lo', 'DRVER ID': 991035983, 'VEHICE ID': 'T667391C'},
-        'S26': {'FIRST NAME': 'Sahid', 'LAST NAME': 'Carias', 'DRVER ID': 673004174, 'VEHICE ID': 'T697659C'},
-        'B35': {'FIRST NAME': 'Chongyuet', 'LAST NAME': 'Li', 'DRVER ID': 983823197, 'VEHICE ID': 'T705373C'},
-        'B88': {'FIRST NAME': 'Sammy', 'LAST NAME': 'Yung', 'DRVER ID': 161939231, 'VEHICE ID': 'T697986C'},
-        'B24': {'FIRST NAME': 'Yu Fulin', 'LAST NAME': 'Yu', 'DRVER ID': 182344719, 'VEHICE ID': 'T729934C'},
-        'S18': {'FIRST NAME': 'Morris', 'LAST NAME': 'Lam', 'DRVER ID': 98166764, 'VEHICE ID': 'T702116C'},
-        'S5': {'FIRST NAME': 'Junzhi', 'LAST NAME': 'Chen', 'DRVER ID': 253956806, 'VEHICE ID': 'T705557C'},
-        'S86': {'FIRST NAME': 'Xianzao', 'LAST NAME': 'Dai', 'DRVER ID': 902260674, 'VEHICE ID': 'T698192C'},
-        'B36': {'FIRST NAME': 'Huaibao', 'LAST NAME': 'Zhao', 'DRVER ID': 284045646, 'VEHICE ID': 'T736379C'},
-        'B26': {'FIRST NAME': 'Lie', 'LAST NAME': 'Li', 'DRVER ID': 686938453, 'VEHICE ID': 'T697865C'},
-        'S98': {'FIRST NAME': 'Yihher', 'LAST NAME': 'Lee', 'DRVER ID': 966044337, 'VEHICE ID': 'T698214C'},
-        'S21': {'FIRST NAME': 'Hanchieh', 'LAST NAME': 'Liao', 'DRVER ID': 946780193, 'VEHICE ID': 'T702363C'},
-        'S37': {'FIRST NAME': 'Kamloi', 'LAST NAME': 'Man', 'DRVER ID': 497101904, 'VEHICE ID': 'T698309C'},
-        'B25': {'FIRST NAME': 'Balbuena', 'LAST NAME': 'Ismael', 'DRVER ID': 962807896, 'VEHICE ID': 'T694405C'}
-        }
 
     decoding_info = {
         '0': {'code': 'A0100', 'modifier': "", 'price': 25.95},
