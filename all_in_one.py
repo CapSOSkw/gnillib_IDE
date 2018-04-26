@@ -1025,6 +1025,15 @@ class Process_MAS():
                            'Leg Mileage', 'Instructions', 'Secondary Service', 'Changed', 'Leg ID',
                            'Code1', 'Code1 Modifier', 'Code2', 'Code2 Modifier', 'Code3', 'Code3 Modifier']]
         if tofile == True:
+
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             cd_df.to_excel(os.path.join(file_saving_path, 'Processed MAS-{0}-to-{1}.xlsx'.format(min_service_date, max_service_date)), index=False)
 
         return cd_df
@@ -1046,6 +1055,15 @@ class SignoffAndCompare():
         duplicated_idx = total_job_df.duplicated(subset=['TripID'], keep='last')
         if any(duplicated_idx):
             only_duplicated_trips_in_totaljobs = total_job_df.loc[duplicated_idx]
+
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             only_duplicated_trips_in_totaljobs.to_excel(os.path.join(file_saving_path, 'duplicated_trips_in_totaljob-{0}-{1}.xlsx'.format(str(datetime.today().date()), str(datetime.now().time().strftime('%H%M%S')))), index=False)
 
 
@@ -1071,8 +1089,8 @@ class SignoffAndCompare():
         mas_2_df['Drop-off Address'] = mas_2_df['Drop-off Address'].apply(lambda x: Process_Method().clean_address(x))
 
             ##### add driver info to total jobs
-        total_job_df['driver id'] = total_job_df['FleetNumber'].apply(lambda x: info_locker.driver_information[x]['DRIVER_ID'])
-        total_job_df['vehicle id'] = total_job_df['FleetNumber'].apply(lambda x: info_locker.driver_information[x]['VEHICLE_ID'])
+        total_job_df['driver id'] = total_job_df['FleetNumber'].apply(lambda x: info_locker.driver_information[str(x)]['DRIVER_ID'])
+        total_job_df['vehicle id'] = total_job_df['FleetNumber'].apply(lambda x: info_locker.driver_information[str(x)]['VEHICLE_ID'])
 
             ##### compute difference
         data_in_total = mas_2_df[mas_2_df['Invoice Number'].isin(total_job_df['TripID'])]
@@ -1112,6 +1130,14 @@ class SignoffAndCompare():
 
                 total_job_df.ix[idx_trip_totaljob[0], 'MAS amount'] = math.floor(float(format(mas_amount * 100, '.2f'))) / 100.0
                 total_job_df.ix[idx_trip_totaljob[0], 'Difference'] = mas_amount - total_job_df.ix[idx_trip_totaljob[0], 'Amount']
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
 
         total_job_df.to_excel(os.path.join(file_saving_path, f'Difference_Totaljobs&Claims_{datetime.today().date()}_{datetime.now().time().strftime("%H%M%S")}.xlsx'), index=False)
 
@@ -1200,6 +1226,15 @@ class SignoffAndCompare():
 
         data_not_in_total = total_job_df[~total_job_df['TripID'].isin(sign_off_df['INVOICE ID'])]
         if data_not_in_total.__len__() != 0:
+
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             data_not_in_total.to_excel(os.path.join(file_saving_path, 'Missed Trips in TotalJob but not in signoff-' + str(datetime.today().date()) + str(datetime.now().time().strftime("%H%M%S")) + '.xlsx'), index=False)
 
         unique_invoice = sign_off_df["INVOICE ID"].unique().tolist()
@@ -1265,6 +1300,14 @@ class SignoffAndCompare():
                                    'DROP OFF TIME', 'DRIVER ID', 'VEHICLE ID', 'LEG STATUS', 'CIN']]
         if tofile == True:
             # date = datetime.today().date()
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             sign_off_df.to_excel(os.path.join(file_saving_path, 'MAS Sign-off-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)),index=False)
 
         return sign_off_df
@@ -1404,9 +1447,26 @@ class SignoffAndCompare():
         self.max_service_date = max(temp_df['service_date'])
 
         if tofile == True:
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             result_df.to_excel(os.path.join(file_saving_path, 'MAS Correction-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
         if missed_trip.__len__() != 0:
+
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
+
             missed_trip.to_excel(os.path.join(file_saving_path, 'MISSED TRIPS-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
         if to837 == True:
@@ -1783,7 +1843,13 @@ class SignoffAndCompare():
             df_for_837['amount 6'] = code6_amount
             df_for_837['unit 6'] = code6_unit
 
-
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
             df_for_837.to_excel(os.path.join(file_saving_path, '837P Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
         return result_df
@@ -1917,6 +1983,14 @@ class SignoffAndCompare():
                                          'payment result', 'payer claim control number', 'CIN', 'DRIVER ID', 'VEHICLE ID', 'Service NPI']
         signoff_compare_PA_df = signoff_compare_PA_df[ordered_columns]
 
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
         signoff_compare_PA_df.to_excel(os.path.join(file_saving_path, new_compare_filename), index=False)
 
 
@@ -1929,7 +2003,7 @@ class Process_Method():
     def use_driver_id_to_find_drivername(driverid):
         for key, value in info_locker.driver_information.items():
 
-            if value['DRVER_ID'] == driverid:
+            if value['DRIVER_ID'] == driverid:
                 return value['FirstName'], value['LastName']
 
     @staticmethod
@@ -2374,6 +2448,13 @@ class Process_Method():
 
         file_name_271 = str(datetime.today().date()) + str(datetime.now().time().strftime("%H%M%S"))
 
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
         result_df.to_excel(os.path.join(file_saving_path, '271-' + file_name_271 + '.xlsx'), index=False)
         return result_df
 
@@ -2464,6 +2545,14 @@ class Process_Method():
         result_df = result_df.transpose()
         result_df = result_df[['INVOICE NUMBER', 'DOB', 'GENDER', 'CLIENT LAST NAME',
                                'CLIENT FIRST NAME', 'MEDICAID ID NUMBER', 'CLAIM CONTROL NUMBER', 'SVC DATE']]
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
         result_df.to_excel(os.path.join(file_saving_path,'276-data-' + str(datetime.today().date()) + '.xlsx'), index=False)
         # 276 data is ready and output an excel file to show 276 data
         # To generate edi 276 file now
@@ -2612,6 +2701,14 @@ class Process_Method():
 
         file_name_276277 = str(datetime.today().date()) + str(datetime.now().time().strftime("%H%M%S"))
 
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
         result_df.to_excel(os.path.join(file_saving_path, '276-277-' + file_name_276277 + '.xlsx'), index=False)
 
     @staticmethod
@@ -2655,6 +2752,15 @@ class Process_Method():
         result_df['GENDER'] = gender
         result_df['DOB'] = dob
         result_df['SVC DATE'] = service_date
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
         result_df.to_excel(os.path.join(file_saving_path,'270-data-' + str(datetime.today().date()) + str(datetime.now().time().strftime('%H%M%S')) + '.xlsx'), index=False)
         # 270 data is ready and output an excel file to show 270 data
         # to generate edi 270 file now
@@ -2673,6 +2779,14 @@ class Process_Method():
         edi = EDI837P(data)
         stream_837data = edi.ISA_IEA()
         filename = edi.file_name + '.txt'
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
         Process_Method().write_txt(stream_837data, os.path.join(file_saving_path, filename))
 
         return
@@ -2902,7 +3016,7 @@ class subwindow_837(QMainWindow):
         super(subwindow_837, self).__init__()
         self.setGeometry(600, 600, 600, 380)
         self.setWindowTitle('837')
-        # pprint(info_locker.driver_information)
+        # pprint(info_locker.base_info['BaseName'])
         self.home()
 
     def home(self):
@@ -3071,6 +3185,14 @@ class subwindow_270_271(QMainWindow):
                             if pendingCIN in self.eligibleFrom_manual_df_cinList:
                                 pendingCIN_idx = self.pendingFromdf.loc[self.pendingFromdf['CIN'] == pendingCIN].index.tolist()
                                 self.pendingFromdf = self.pendingFromdf.drop(index=pendingCIN_idx)
+
+                    current_path = os.getcwd()
+                    daily_folder = str(datetime.today().date())
+                    basename = info_locker.base_info['BaseName']
+                    file_saving_path = os.path.join(current_path, basename, daily_folder)
+                    if not os.path.exists(file_saving_path):
+                        os.makedirs(file_saving_path)
+                        print('Save files to {0}'.format(file_saving_path))
 
                     self.pendingFromdf.to_excel(os.path.join(file_saving_path, '271-Not eligible Trips' + str(datetime.today().date()) + "-" + str(datetime.now().time().strftime("%H%M%S")) + '.xlsx'), index=False)
                     QMessageBox.about(self, 'Message', 'File Processed Successfully!')
@@ -4140,16 +4262,23 @@ class subwindow_addDriver(QMainWindow):
             nameLabel6 = QLabel('Vehicle ID:')
             nameLabel7 = QLabel('- Delete Driver -')
             nameLabel8 = QLabel('Fleet:')
+            nameLabel9 = QLabel('Base:')
 
             self.textbox1 = QLineEdit()
             self.base_combobox = QComboBox(self)
+            self.delete_base_combobox = QComboBox(self)
+
             for base in self.only_basenames:
                 self.base_combobox.addItem(base)
+                self.delete_base_combobox.addItem(base)
+
             self.textbox3 = QLineEdit()
             self.textbox4 = QLineEdit()
             self.textbox5 = QLineEdit()
             self.textbox6 = QLineEdit()
             self.textbox8 = QLineEdit()
+
+
 
             btnAddDriver = QPushButton('Add')
             btnAddDriver.clicked.connect(self.add_driver2DB)
@@ -4175,7 +4304,9 @@ class subwindow_addDriver(QMainWindow):
             self.tab1.layout.addWidget(self.textbox6, 5, 1)
             self.tab1.layout.addWidget(btnAddDriver, 6, 1)
             self.tab1.layout.addWidget(self.textbox8, 8, 1)
-            self.tab1.layout.addWidget(btnDeleteDriver, 9, 1)
+            self.tab1.layout.addWidget(btnDeleteDriver, 10, 1)
+            self.tab1.layout.addWidget(nameLabel9, 9, 0)
+            self.tab1.layout.addWidget(self.delete_base_combobox, 9, 1)
 
             self.tab1.setLayout(self.tab1.layout)
 
@@ -4202,8 +4333,9 @@ class subwindow_addDriver(QMainWindow):
 
         def deleteDriver(self):
             delete_fleet = self.textbox8.text()
+            delete_basename = self.delete_base_combobox.currentText()
             SQ = mysqlite('EDI.db')
-            SQ.delete_driver(table='driver_info', fleet=delete_fleet)
+            SQ.delete_driver(table='driver_info', fleet=delete_fleet, base=delete_basename)
             QMessageBox.about(self, 'Message', 'Driver {0} is deleted!'.format(delete_fleet))
 
         def showDriver(self):
@@ -5050,6 +5182,14 @@ class mysqlite():
         date = datetime.today().date()
         df = pd.read_sql('SELECT * FROM {0}'.format(table), con=self.conn)
         if tofile==True:
+
+            current_path = os.getcwd()
+            daily_folder = str(datetime.today().date())
+            basename = info_locker.base_info['BaseName']
+            file_saving_path = os.path.join(current_path, basename, daily_folder)
+            if not os.path.exists(file_saving_path):
+                os.makedirs(file_saving_path)
+                print('Save files to {0}'.format(file_saving_path))
             df.to_excel('Manually Checking Lib-' + str(date) + '.xlsx', index=False)
         return df
 
@@ -5121,7 +5261,7 @@ class mysqlite():
         self.conn.commit()
 
     def create_table_for_driver(self, table):
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}(Fleet TEXT, Base TEXT, FirstName TEXT, LastName TEXT, DRIVER_ID INTEGER, VEHICLE_ID TEXT, PRIMARY KEY(Fleet))'.format(table))
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}(Fleet TEXT, Base TEXT, FirstName TEXT, LastName TEXT, DRIVER_ID INTEGER, VEHICLE_ID TEXT, PRIMARY KEY(DRIVER_ID))'.format(table))
 
     def upsert_newdriver(self, table, fleet, base, firstname, lastname, driverid, vehicleid):
         self.create_table_for_driver(table)
@@ -5129,8 +5269,8 @@ class mysqlite():
                             (fleet.upper(), base, firstname.upper(), lastname.upper(), driverid, vehicleid.upper()))
         self.conn.commit()
 
-    def delete_driver(self, table, fleet):
-        self.cursor.execute('DELETE FROM {0} WHERE Fleet="{1}"'.format(table, fleet))
+    def delete_driver(self, table, fleet, base):
+        self.cursor.execute('DELETE FROM {0} WHERE Fleet="{1}" and Base="{2}"'.format(table, fleet, base))
         self.conn.commit()
 
     def get_data_from_driver(self, table):
@@ -5138,15 +5278,14 @@ class mysqlite():
         return df
 
 
-
 if __name__ == '__main__':
 
-    current_path = os.getcwd()
-    daily_folder = str(datetime.today().date())
-    file_saving_path = os.path.join(current_path, daily_folder)
-    if not os.path.exists(file_saving_path):
-        os.makedirs(file_saving_path)
-        print('Save files to {0}'.format(file_saving_path))
+    # current_path = os.getcwd()
+    # daily_folder = str(datetime.today().date())
+    # file_saving_path = os.path.join(current_path, daily_folder)
+    # if not os.path.exists(file_saving_path):
+    #     os.makedirs(file_saving_path)
+    #     print('Save files to {0}'.format(file_saving_path))
 
 
     def run():
