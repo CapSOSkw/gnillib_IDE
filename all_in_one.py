@@ -2,7 +2,7 @@
 **
 * @Author: Keyuan Wu
 * @Update: 04/26/2018
-*
+* Python 3.6.5
 **
 '''
 import pandas as pd
@@ -146,7 +146,7 @@ class EDI270():
         self.interchange_ctrl_number = "0" + str(self.date_format1) + str(self.time_format[2:4])
 
         self.version_code = info_locker.version_code['270']
-        self.submitter_info = info_locker.clean_air_base
+        self.submitter_info = info_locker.base_info
         self.receiver_info = info_locker.NYSDOH
 
         self.file_name = '270-' + self.date_format2 + self.time_format + ".txt"
@@ -272,7 +272,7 @@ class EDI276():
         self.interchange_ctrl_number = "0" + str(self.date_format1) + str(self.time_format[2:])
 
         self.version_code = info_locker.version_code['276']
-        self.submitter_info = info_locker.clean_air_base
+        self.submitter_info = info_locker.base_info
         self.bill_provider = info_locker.base_info
         self.receiver_info = info_locker.NYSDOH
 
@@ -391,7 +391,7 @@ class EDI837P():
         self.basic_line = 33
         self.lx_lines = 0
 
-        self.submitter_info = info_locker.clean_air_base
+        self.submitter_info = info_locker.base_info
         self.bill_provider = info_locker.base_info
         self.driver_info = info_locker.driver_information
         self.receiver_info = info_locker.NYSDOH
