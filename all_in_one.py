@@ -5516,8 +5516,7 @@ class mysqlite():
     def upsert_newdriver(self, table, fleet, base, firstname, lastname, driverid, vehicleid):
         # print(fleet, base, firstname, lastname, driverid, vehicleid)
         self.create_table_for_driver(table)
-        self.cursor.execute('INSERT OR REPLACE INTO {0} (Fleet, Base, FirstName, LastName, DRIVER_ID, VEHICLE_ID) VALUES (?,?,?,?,?,?)'.format(table),
-                            (fleet.upper(), base, firstname.upper(), lastname.upper(), driverid, vehicleid.upper()))
+        self.cursor.execute('INSERT OR REPLACE INTO {0} (Fleet, Base, FirstName, LastName, DRIVER_ID, VEHICLE_ID) VALUES (?,?,?,?,?,?)'.format(table), (fleet.upper(), base, firstname.upper(), lastname.upper(), driverid, vehicleid.upper()))
         self.conn.commit()
 
     def delete_driver(self, table, fleet, base):
