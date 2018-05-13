@@ -1877,6 +1877,56 @@ class SignoffAndCompare():
             df_for_837['amount 6'] = code6_amount
             df_for_837['unit 6'] = code6_unit
 
+            # Second 837P
+            df_2nd_837 = df_for_837
+            df_2nd_837 = df_2nd_837.fillna("")
+
+            for r in range(len(df_2nd_837)):
+                row_data = df_2nd_837.ix[r, :]
+
+                # calculate number of legs
+                count_legs = int(row_data['unit 1'])
+
+                if (row_data['service code 2'] == 'A0100') and (row_data['modifier code 2'] == 'TN'):
+                    count_legs += int(row_data['unit 2'])
+
+                if (row_data['service code 2'] == 'S0215'):
+                    if row_data['modifier code 2'] == 'TN':
+                        old_amount2 = row_data['amount 2']
+                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'] / count_legs) * count_legs
+                        df_2nd_837.ix[r, 'amount 2'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
+                        delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
+                        delta_amount2 = float(format(delta_amount2, '.2f'))
+                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
+
+                    else:
+                        old_amount2 = row_data['amount 2']
+                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'] / count_legs) * count_legs
+                        df_2nd_837.ix[r, 'amount 2'] = math.floor(
+                            float(format(3.21 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
+                        delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
+                        delta_amount2 = float(format(delta_amount2, '.2f'))
+                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
+
+                if (row_data['service code 3'] == 'S0215'):
+                    if row_data['modifier code 3'] == 'TN':
+                        old_amount3 = row_data['amount 3']
+                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3']/ count_legs) * count_legs
+                        df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
+                        delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
+                        delta_amount3 = float(format(delta_amount3, '.2f'))
+                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
+
+                    else:
+                        old_amount3 = row_data['amount 3']
+                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'] / count_legs) * count_legs
+                        df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(3.21 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
+                        delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
+                        delta_amount3 = float(format(delta_amount3, '.2f'))
+                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
+
+            df_2nd_837.to_excel(os.path.join(file_saving_path, '837P-2 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
+
             current_path = os.getcwd()
             daily_folder = str(datetime.today().date())
             basename = info_locker.base_info['BaseName']
@@ -1884,7 +1934,7 @@ class SignoffAndCompare():
             if not os.path.exists(file_saving_path):
                 os.makedirs(file_saving_path)
                 print('Save files to {0}'.format(file_saving_path))
-            df_for_837.to_excel(os.path.join(file_saving_path, '837P Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
+            df_for_837.to_excel(os.path.join(file_saving_path, '837P-1 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
         return result_df
 
