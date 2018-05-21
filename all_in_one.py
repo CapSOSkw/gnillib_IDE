@@ -23,6 +23,7 @@ import sqlite3
 from sqlalchemy import create_engine
 from pprint import pprint
 from shapely.geometry import Point, Polygon
+import arrow
 
 
 class info_locker(object):
@@ -1354,6 +1355,7 @@ class SignoffAndCompare():
         missed_trip = pd.DataFrame()
 
         pa_roast_df = pd.read_csv(pa_file) if pa_file[-1] == 'v' else pd.read_table(pa_file)
+        # pa_roast_df = pd.read_table(pa_file)
         pa_roast_df = pa_roast_df.fillna("")
         pa_roast_df['Invoice Number'] = pa_roast_df['Invoice Number'].astype(str)
 
@@ -3028,6 +3030,86 @@ class Process_Method():
         S = SignoffAndCompare()
         S.sign_off(processed_mas_df, total_job, tofile=True)
 
+    @staticmethod
+    def transfer2Excel(input_file):
+        df = pd.read_csv(input_file)
+        df.to_excel(f'{input_file}_EXCEL.xlsx', index=False)
+
+    @staticmethod
+    def process_835(receipt_file, lined_file=True):
+        if lined_file==False:    # for raw receipt data
+            receipt_df = pd.read_csv(receipt_file, delimiter="~", header=None,)
+            receipt_df = receipt_df.transpose()
+            receipt_df.columns = ['line']
+            receipt_df['line'] = receipt_df['line'].dropna()
+        else:          # already split into lines
+            receipt_df = pd.read_csv(receipt_file)
+            receipt_df.columns = ['line']
+
+        receipt_df = receipt_df.dropna()
+        receipt_df['line_sep'] = receipt_df['line'].apply(lambda x: x.split("*"))
+
+        clp_idx = [l for l in range(receipt_df.__len__()) if receipt_df.ix[l, 1][0] == 'CLP'] + [receipt_df.__len__()]
+
+        invoice_number = []
+        expect_amount = []
+        paid_amount = []
+        claim_number = []
+        patient_ln = []
+        patient_fn = []
+        patient_medicaid = []
+        service_date = []
+
+        all_codes = []
+
+        for i in range(0, len(clp_idx)-1):
+            code = []
+
+            for r in range(clp_idx[i], clp_idx[i+1]):
+                row = receipt_df.ix[r, 1]
+                if row[0] == "CLP":
+                    invoice_number.append(row[1])
+                    expect_amount.append(float(row[3]))
+                    paid_amount.append(float(row[4]))
+                    claim_number.append(row[7])
+
+                elif row[0] == "NM1" and row[1] == "QC":
+                    patient_ln.append(row[3])
+                    patient_fn.append(row[4])
+                    patient_medicaid.append(row[9])
+
+                elif row[0] == 'DTM' and row[1] == "232":
+                    service_date.append(arrow.get(row[2], 'YYYYMMDD').format('MM/DD/YYYY'))
+
+                elif row[0] == 'SVC':
+                    code.append(row[1][3:])
+
+            all_codes.append(code)
+
+        # print(invoice_number.__len__(), all_codes.__len__())
+        result = pd.DataFrame()
+        result['Invoice Number'] = invoice_number
+        result['Claim Number'] = claim_number
+        result['Expected Amount'] = expect_amount
+        result['Paid Amount'] = paid_amount
+        result['Patient Firstname'] = patient_fn
+        result['Patient Lastname'] = patient_ln
+        result['Patient Medicaid'] = patient_medicaid
+        result['Service Date'] = service_date
+        result['Code'] = all_codes
+
+        # file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+
+        # current_path = os.getcwd()
+        # daily_folder = str(datetime.today().date())
+        # basename = info_locker.base_info['BaseName']
+        # file_saving_path = os.path.join(current_path, basename, daily_folder)
+        # if not os.path.exists(file_saving_path):
+        #     os.makedirs(file_saving_path)
+        #     print('Save files to {0}'.format(file_saving_path))
+
+        result.to_excel('835 Test.xlsx', index=False)
+
 
 class window(QMainWindow):
 
@@ -4295,8 +4377,10 @@ class subwindow_processTXT(QMainWindow):
             self.textboxTab5_1 = QLineEdit()
             btnToLines = QPushButton('To Lines')
             btnToStream = QPushButton('To Stream')
+            btnToExcel = QPushButton('To Excel')
             btnToLines.clicked.connect(self.transfer2lines)
             btnToStream.clicked.connect(self.transfer2stream)
+            btnToExcel.clicked.connect(self.transfer2Excel)
             btnSelectFileTab5_1 = QPushButton('...')
             btnSelectFileTab5_1.clicked.connect(self.select_fileTab5_1)
 
@@ -4305,6 +4389,7 @@ class subwindow_processTXT(QMainWindow):
             self.tab5.layout.addWidget(btnSelectFileTab5_1, 0, 2)
             self.tab5.layout.addWidget(btnToLines, 1, 2)
             self.tab5.layout.addWidget(btnToStream, 2, 2)
+            self.tab5.layout.addWidget(btnToExcel, 3, 2)
             self.tab5.setLayout(self.tab5.layout)
 
         def select_fileTab5_1(self):
@@ -4337,6 +4422,14 @@ class subwindow_processTXT(QMainWindow):
 
             else:
                 P.transfer2stream(self.file_name5_1)
+                QMessageBox.about(self, 'Message', 'File generated successfully!')
+
+        def transfer2Excel(self):
+            P = Process_Method()
+            if not self.file_name5_1:
+                QMessageBox.about(self, 'Message', 'Error!')
+            else:
+                P.transfer2Excel(self.file_name5_1)
                 QMessageBox.about(self, 'Message', 'File generated successfully!')
 
     def __init__(self):
