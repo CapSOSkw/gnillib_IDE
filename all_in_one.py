@@ -1879,6 +1879,7 @@ class SignoffAndCompare():
             df_for_837['amount 6'] = code6_amount
             df_for_837['unit 6'] = code6_unit
 
+
             # Second 837P
             df_2nd_837 = df_for_837
             df_2nd_837 = df_2nd_837.fillna("")
@@ -1929,6 +1930,7 @@ class SignoffAndCompare():
 
             df_2nd_837.to_excel(os.path.join(file_saving_path, '837P-2 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
+
             current_path = os.getcwd()
             daily_folder = str(datetime.today().date())
             basename = info_locker.base_info['BaseName']
@@ -1936,7 +1938,10 @@ class SignoffAndCompare():
             if not os.path.exists(file_saving_path):
                 os.makedirs(file_saving_path)
                 print('Save files to {0}'.format(file_saving_path))
+
             df_for_837.to_excel(os.path.join(file_saving_path, '837P-1 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
+
+
 
         return result_df
 
