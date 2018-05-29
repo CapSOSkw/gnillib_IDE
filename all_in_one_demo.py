@@ -1896,7 +1896,8 @@ class SignoffAndCompare():
                 if (row_data['service code 2'] == 'S0215'):
                     if row_data['modifier code 2'] == 'TN':
                         old_amount2 = row_data['amount 2']
-                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'] / count_legs) * count_legs
+
+                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
                         df_2nd_837.ix[r, 'amount 2'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
                         delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
                         delta_amount2 = float(format(delta_amount2, '.2f'))
@@ -1904,7 +1905,8 @@ class SignoffAndCompare():
 
                     else:
                         old_amount2 = row_data['amount 2']
-                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'] / count_legs) * count_legs
+
+                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
                         df_2nd_837.ix[r, 'amount 2'] = math.floor(
                             float(format(3.21 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
                         delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
@@ -1914,7 +1916,8 @@ class SignoffAndCompare():
                 if (row_data['service code 3'] == 'S0215'):
                     if row_data['modifier code 3'] == 'TN':
                         old_amount3 = row_data['amount 3']
-                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3']/ count_legs) * count_legs
+
+                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
                         df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
                         delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
                         delta_amount3 = float(format(delta_amount3, '.2f'))
@@ -1922,7 +1925,8 @@ class SignoffAndCompare():
 
                     else:
                         old_amount3 = row_data['amount 3']
-                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'] / count_legs) * count_legs
+
+                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
                         df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(3.21 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
                         delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
                         delta_amount3 = float(format(delta_amount3, '.2f'))
@@ -1940,8 +1944,6 @@ class SignoffAndCompare():
                 print('Save files to {0}'.format(file_saving_path))
 
             df_for_837.to_excel(os.path.join(file_saving_path, '837P-1 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
-
-
 
         return result_df
 
@@ -2750,6 +2752,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -2769,6 +2773,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -2788,6 +2794,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -2807,6 +2815,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -2826,6 +2836,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -2845,6 +2857,8 @@ class Process_Method():
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
                     description_status_code = ' - MAS Codes Wrong'
+                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' -Wrong NPI'
                 else:
                     description_status_code = ""
 
@@ -3157,7 +3171,7 @@ class window(QMainWindow):
             self.base_combobox.addItem(base_name)
         # self.base_combobox.addItem('Clean Air Base')
         nameLabel1.move(280, 35)
-        self.base_combobox.move(320, 52)
+        self.base_combobox.move(320, 25)
         self.base_combobox.resize(140, 40)
         self.base_combobox.activated[str].connect(self.Select_base_and_save_info)
 
