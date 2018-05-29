@@ -2870,7 +2870,7 @@ class Process_Method():
                     result = result + "(Wrong Codes: {0})".format(",".join(error_codes))
 
                 if edi837:
-                    # print(type(invoice_num))
+                    # print(invoice_num)
                     npi_temp = edi837_df.loc[edi837_df['invoice number'] == invoice_num, 'service npi'].tolist()
                     NPI = int(npi_temp[0]) if len(npi_temp) != 0 else ""
                     # print(NPI)
@@ -2881,13 +2881,20 @@ class Process_Method():
                     vehicleid_temp = edi837_df.loc[edi837_df['invoice number'] == invoice_num, 'driver plate number'].tolist()
                     Vehicle_id = vehicleid_temp[0] if len(vehicleid_temp) != 0 else ""
 
+                    claim_amount_temp = edi837_df.loc[edi837_df['invoice number'] == invoice_num, 'claim_amount'].tolist()
+                    claim_amount = float(claim_amount_temp[0]) if len(claim_amount_temp) != 0 else 0
+
+                    if total_paid_amt >= claim_amount:
+                        result = ""
+
                     temp_dict[str(invoice_num)] = {
                         'Invoice Number': invoice_num,
                         'Patient Lastname': patient_lastname,
                         'Patient Firstname': patient_firstname,
                         'CIN': CIN,
                         'Claim Ctrl Number': claim_ctrl_num,
-                        'Total Expected Amt': total_expected_amt,
+                        'P1 Total Expected Amt': claim_amount,
+                        'P2 Total Expected Amt': total_expected_amt,
                         'Total Paid Amt': total_paid_amt,
                         'Service Date': service_date,
                         'Encoded Expected Amt': encode_expected_list,
@@ -2936,7 +2943,7 @@ class Process_Method():
         result_df = pd.DataFrame(result_dict)
         result_df = result_df.transpose()
         if edi837:
-            result_df = result_df[['Invoice Number', 'Result', 'Total Expected Amt', 'Total Paid Amt', 'Encoded Expected Amt', 'Encoded Paid Amt',
+            result_df = result_df[['Invoice Number', 'Result', 'P1 Total Expected Amt', 'P2 Total Expected Amt', 'Total Paid Amt', 'Encoded Expected Amt', 'Encoded Paid Amt',
                                'Patient Lastname', 'Patient Firstname', 'CIN', 'Claim Ctrl Number', 'Service Date', 'NPI', 'DRIVER ID', 'VEHICLE ID']]
         else:
             result_df = result_df[
