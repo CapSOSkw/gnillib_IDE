@@ -2302,6 +2302,8 @@ class Process_Method():
         other_payer_telephone2 = ""
         other_payer_group_number2 = ""
         eligible_result = ""
+        CD = ""
+
 
         for l in range(receipt_df.__len__()):
             row = receipt_df.ix[l, 1]
@@ -2422,6 +2424,14 @@ class Process_Method():
             elif row[0] == 'EB' and row[1] == '1' and row[2] == 'IND':
                 covered_service_codes.append(str(row[3]))
 
+            elif row[0] == 'MSG':
+                find_cnty = re.findall('CNTY', row[1])
+                if find_cnty.__len__() != 0:
+                    CD = row[1].split(" ")[1]
+                    CD = int(re.findall(r'\d+', CD)[0])
+                else:
+                    pass
+
             if other_payer_name.__len__() == 1:
                 other_payer_name1 = other_payer_name[0]
                 other_payer_address1 = other_payer_address[0]
@@ -2448,6 +2458,7 @@ class Process_Method():
                                            'Contact Tel.': contact_tel,
                                            'Plan code': plan_code,
                                            'Covered Codes': str(covered_service_codes),
+                                           'CNTY': CD,
 
                                            'Other Payer1 name': other_payer_name1,
                                            'Other Payer1 address': other_payer_address1,
@@ -2461,7 +2472,6 @@ class Process_Method():
                                            }
 
             if row[0] == 'SE':   # section ends
-                # print(temp_dict)
 
                 ifPlanCodeInDB = SQ.IfplancodeInDB(table='PlanCodeLib', plancode=plan_code)
                 if ifPlanCodeInDB:
@@ -2487,6 +2497,7 @@ class Process_Method():
                                                'Contact Tel.': contact_tel,
                                                'Plan code': plan_code,
                                                'Covered Codes': str(covered_service_codes),
+                                               'CNTY': CD,
 
                                                'Other Payer1 name': other_payer_name1,
                                                'Other Payer1 address': other_payer_address1,
@@ -2529,6 +2540,7 @@ class Process_Method():
                 eligible_result = ""
                 other_payer_telephone = []
                 other_payer_group_number = []
+                CD = ""
 
                 covered_service_codes = []
                 temp_dict = {}
@@ -2536,7 +2548,7 @@ class Process_Method():
         result_dict.pop("")
         result_df = pd.DataFrame(result_dict)
         result_df = result_df.transpose()
-        result_df = result_df[['Invoice number', 'Eligibility Result', 'Service date', 'Patient firstname', 'Patient lastname', 'Plan code', 'Eligible', 'CIN', 'Covered Codes', 'Patient DOB', 'Patient gender',
+        result_df = result_df[['Invoice number', 'Eligibility Result', 'CNTY', 'Service date', 'Patient firstname', 'Patient lastname', 'Plan code', 'Eligible', 'CIN', 'Covered Codes', 'Patient DOB', 'Patient gender',
                                'Payer name', 'Payer address', 'Contact Tel.', 'Other Payer1 name', 'Other Payer1 address', 'Other Payer1 tel.', 'Other Payer1 group number',
                                'Other Payer2 name', 'Other Payer2 address', 'Other Payer2 tel.', 'Other Payer2 group number', 'Other Payer policy number']]
 
@@ -2714,8 +2726,8 @@ class Process_Method():
                     description_status_code = ' -Duplicated Claim'
                 elif status_code == 'F2:562':
                     description_status_code = ' -Wrong NPI'
-                # elif status_code == 'P0:252':
-                #     description_status_code = ' -No PA Number'
+                elif status_code == 'D0:21':
+                    description_status_code = ' -Missing or invalid info'
                 # elif status_code == 'F2:84':
                 #     description_status_code = ' -Service Not Authorized'
                 else:
@@ -2725,7 +2737,7 @@ class Process_Method():
                     result = 'Paid'
                 elif total_paid_amt == 0:
                     if total_expected_amt == 0:
-                        result = 'Error'
+                        result = 'Error' + description_status_code
                     else:
                         result = 'Denied' + description_status_code
                 else:
@@ -2748,6 +2760,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2769,6 +2783,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2790,6 +2806,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2811,6 +2829,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2832,6 +2852,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2853,6 +2875,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -3222,11 +3246,8 @@ class window(QMainWindow):
             self.new_837_window.show()
 
     def open_270_271_subwindow(self):
-        if datetime.today().date().day == 1:
-            # reset 271 manual check lib
-            SQ = mysqlite('EDI.db')
-            SQ.delete_all_manually271Lib('ManuallyCheck271')
-            QMessageBox.about(self, 'Message', 'Manual Check Lib has been reset!')
+        SQ = mysqlite('EDI.db')
+        SQ.delete_lastmonth_manually271Lib(table='ManuallyCheck271')
 
         if not info_locker.base_info:
             QMessageBox.about(self, 'Message', 'Select Base first!')
@@ -5596,9 +5617,19 @@ class mysqlite():
         self.cursor.execute('DELETE FROM {0} WHERE cin="{1}"'.format(table, cin))
         self.conn.commit()
 
-    def delete_all_manually271Lib(self, table):
-        self.cursor.execute('DELETE FROM {0}'.format(table))
-        self.conn.commit()
+    def delete_lastmonth_manually271Lib(self, table):
+        self.cursor.execute(f'SELECT UpdateDate, CIN FROM {table}')
+        response = self.cursor.fetchall()
+        current_month = arrow.now().date().month
+        
+        for res in response:
+            date, cin = res
+            month_of_date = arrow.get(date).date().month
+            if month_of_date != current_month:
+                self.delete_manually271Lib(table, cin)
+                print(f'CIN: {cin} is expired!')
+            else:
+                pass
 
     def generate_excel_from_manually271Lib(self, table, tofile=True):
         date = datetime.today().date()
