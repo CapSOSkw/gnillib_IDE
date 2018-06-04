@@ -1,7 +1,7 @@
 '''
 **
 * @Author: Keyuan Wu
-* @Update: 5/25/2018
+* @Update: 06/03/2018
 **
 '''
 import pandas as pd
@@ -3143,17 +3143,24 @@ class Process_Method():
         result['Service Date'] = service_date
         result['Code'] = all_codes
 
-        # file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+        last_line = len(result) + 1
+        result.ix[last_line, 'Claim Number'] = 'Total:'
+        result.ix[last_line, 'Expected Amount'] = sum(expect_amount)
+        result.ix[last_line, 'Paid Amount'] = sum(paid_amount)
+        result.ix[last_line, 'Patient Firstname'] = abs(result.ix[last_line, 'Expected Amount'] - result.ix[last_line, 'Paid Amount'])
 
-        # current_path = os.getcwd()
-        # daily_folder = str(datetime.today().date())
-        # basename = info_locker.base_info['BaseName']
-        # file_saving_path = os.path.join(current_path, basename, daily_folder)
-        # if not os.path.exists(file_saving_path):
-        #     os.makedirs(file_saving_path)
-        #     print('Save files to {0}'.format(file_saving_path))
 
-        result.to_excel('835 Test.xlsx', index=False)
+        file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
+        result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
 
 
 class window(QMainWindow):
@@ -3799,18 +3806,22 @@ class subwindow_276_277(QMainWindow):
             self.file_name6_2 = None
             self.file_name6_3 = None
             self.file_name6_4 = None
+            self.file_name8 = None
             self.df = pd.DataFrame()
 
             self.tabs = QTabWidget()
 
             self.tab6 = QWidget()
             self.tab7 = QWidget()
+            self.tab8 = QWidget()
 
             self.tabs.addTab(self.tab6, '-*Upload*-')
             self.tabs.addTab(self.tab7, '-*Payment Check*-')
+            self.tabs.addTab(self.tab8, '-*835*-')
 
             self.mytab6()
             self.mytab7()
+            self.mytab8()
 
             self.layout.addWidget(self.tabs)
             self.setLayout(self.layout)
@@ -3860,6 +3871,26 @@ class subwindow_276_277(QMainWindow):
             self.tab7.layout.addWidget(self.btnProcess, 2, 2)
             self.tab7.setLayout(self.tab7.layout)
 
+        def mytab8(self):
+            self.tab8.layout = QGridLayout(self)
+
+            self.nameLabel_835_1 = QLabel('835 File')
+            self.textboxTab8_1 = QLineEdit()
+            self.btnSelectTab8 = QPushButton('...')
+            self.btnSelectTab8.clicked.connect(self.select_fileTab8)
+
+            self.btnRun = QPushButton('Run')
+            self.btnRun.clicked.connect(self.process835)
+
+            self.tab8.layout.addWidget(self.nameLabel_835_1, 0, 0)
+            self.tab8.layout.addWidget(self.textboxTab8_1, 0, 1)
+            self.tab8.layout.addWidget(self.btnSelectTab8, 0, 2)
+            self.tab8.layout.addWidget(self.btnRun, 1, 2)
+            self.tab8.setLayout(self.tab8.layout)
+
+
+
+
         def select_fileTab6_1(self):
             self.file_name6_1, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
@@ -3879,6 +3910,12 @@ class subwindow_276_277(QMainWindow):
             self.file_name6_4, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
             self.textboxTab6_4.setText(self.file_name6_4)
+
+        def select_fileTab8(self):
+            self.file_name8, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textboxTab8_1.setText(self.file_name8)
+
 
         def close_application(self):
             choice = QMessageBox.question(self, 'Message',
@@ -3922,6 +3959,20 @@ class subwindow_276_277(QMainWindow):
                     P.process_276_receipt(self.file_name6_3, self.file_name6_4, lined_file=False)
                     QMessageBox.about(self, 'Message', 'File Processed Successfully!')
 
+            else:
+                pass
+
+        def process835(self):
+            choice = QMessageBox.question(self, 'Message', "Are you sure to process EDI 276's 277?",
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+            if choice == QMessageBox.Yes:
+                if not self.file_name8:
+                    QMessageBox.about(self, 'Message', 'Error!')
+                else:
+                    P = Process_Method()
+                    P.process_835(self.file_name8, lined_file=False)
+                    QMessageBox.about(self, 'Message', 'File Processed Successfully!')
             else:
                 pass
 
