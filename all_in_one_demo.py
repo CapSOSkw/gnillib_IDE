@@ -1450,8 +1450,10 @@ class SignoffAndCompare():
                 # 根据service day 做判断
                 cache_service_day = signoff_df.ix[idx_sign[0], 'SERVICE DAY']
                 thresh_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+
                 if arrow.get(cache_service_day, 'MM/DD/YYYY').date() < thresh_date:
-                    price_array = np.array([[25.2], [35], [3.21], [2.25], [25]])
+
+                    price_array = np.array([[25.2], [35], [3.02], [2.25], [25]])
                 else:
                     price_array = np.array([[25.95], [35], [3.21], [2.25], [25]])
 
@@ -1609,6 +1611,30 @@ class SignoffAndCompare():
                 service_state.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Drop-off State'])
                 service_zip.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Drop-off Zip'])
                 service_date.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Service Starts'])
+
+                threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+                edi_temp_date = mas_2_df.ix[invoice_num_in_mas_index[0], 'Service Starts']
+
+                if arrow.get(edi_temp_date, 'MM/DD/YYYY').date() < threshhold_date:
+                    info_locker.decoding_info =  {
+                        '0': {'code': 'A0100', 'modifier': "", 'price': 25.2},
+                        '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                        '2': {'code': 'S0215', 'modifier': "", 'price': 3.02},
+                        '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                        '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                        '5': {'code': 'A0170', 'modifier': "CG", }
+                    }
+                else:
+                    info_locker.decoding_info =  {
+                        '0': {'code': 'A0100', 'modifier': "", 'price': 25.95},
+                        '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                        '2': {'code': 'S0215', 'modifier': "", 'price': 3.21},
+                        '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                        '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                        '5': {'code': 'A0170', 'modifier': "CG", }
+                    }
+
+
                 service_npi.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Ordering Provider ID'])
 
                 claim_amount.append(result_df.ix[invoice_num_in_result_df_index[0], 'sign-off Total Amount'])
@@ -2064,10 +2090,10 @@ class SignoffAndCompare():
                     pass
 
                 # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'])
-                if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'] != signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount']:
-                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'Different'
-                else:
+                if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'] <= signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount']:
                     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'OKAY'
+                else:
+                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'DIFFERENT'
 
                 # if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'service date'] == "":
                 #     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'Not Found'
