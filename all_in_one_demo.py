@@ -1445,7 +1445,16 @@ class SignoffAndCompare():
                 temp_encode_signoff[4] = all_codes.count('A0100SC')
                 # temp_encode[5] = all_codes.count('A0170CG')
                 encode_signoff_array = np.asarray(temp_encode_signoff)
-                price_array = np.array([[25.95], [35], [3.21], [2.25], [25]])
+
+                # 2017.12.31，（不包含31号）之前 A0100 = 25.2
+                # 根据service day 做判断
+                cache_service_day = signoff_df.ix[idx_sign[0], 'SERVICE DAY']
+                thresh_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+                if arrow.get(cache_service_day, 'MM/DD/YYYY').date() < thresh_date:
+                    price_array = np.array([[25.2], [35], [3.21], [2.25], [25]])
+                else:
+                    price_array = np.array([[25.95], [35], [3.21], [2.25], [25]])
+
                 totalprice = np.dot(encode_signoff_array, price_array)
                 totalprice = str(totalprice)
                 totalprice = float(totalprice[1:-1])
@@ -2659,6 +2668,7 @@ class Process_Method():
         if not os.path.exists(file_saving_path):
             os.makedirs(file_saving_path)
             print('Save files to {0}'.format(file_saving_path))
+
         result_df.to_excel(os.path.join(file_saving_path,'276-data-' + str(datetime.today().date()) + '.xlsx'), index=False)
         # 276 data is ready and output an excel file to show 276 data
         # To generate edi 276 file now
@@ -3706,7 +3716,7 @@ class subwindow_manually271Lib(QMainWindow):
 class ShowManualCheck_subwindow(QMainWindow):
     def __init__(self):
         super(ShowManualCheck_subwindow, self).__init__()
-        self.setGeometry(600, 600, 750, 400)
+        self.setGeometry(600, 600, 700, 380)
 
         self.setWindowTitle('EDI GUI')
         self.home()
@@ -3777,6 +3787,7 @@ class EDI271_pending_subwindow(QMainWindow):
         for r in range(countRow):
             for c in range(countCol):
                 self.tableWidget.setItem(r, c, QTableWidgetItem(str(self.data.ix[r, c])))
+
 
         self.tableWidget.doubleClicked.connect(self.clickAndChange)
 
@@ -3874,7 +3885,7 @@ class subwindow_276_277(QMainWindow):
         def mytab8(self):
             self.tab8.layout = QGridLayout(self)
 
-            self.nameLabel_835_1 = QLabel('835 File')
+            self.nameLabel_835_1 = QLabel('835 File:')
             self.textboxTab8_1 = QLineEdit()
             self.btnSelectTab8 = QPushButton('...')
             self.btnSelectTab8.clicked.connect(self.select_fileTab8)
@@ -3887,9 +3898,6 @@ class subwindow_276_277(QMainWindow):
             self.tab8.layout.addWidget(self.btnSelectTab8, 0, 2)
             self.tab8.layout.addWidget(self.btnRun, 1, 2)
             self.tab8.setLayout(self.tab8.layout)
-
-
-
 
         def select_fileTab6_1(self):
             self.file_name6_1, _ = QFileDialog.getOpenFileName(self, 'Select File',
@@ -3915,7 +3923,6 @@ class subwindow_276_277(QMainWindow):
             self.file_name8, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
             self.textboxTab8_1.setText(self.file_name8)
-
 
         def close_application(self):
             choice = QMessageBox.question(self, 'Message',
