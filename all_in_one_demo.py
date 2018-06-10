@@ -2027,7 +2027,7 @@ class SignoffAndCompare():
         payment_df['paid amount'] = payment_df['paid amount'].apply(lambda x: reverse_minus(x))
         # payment_df['paid amount'] = payment_df['paid amount'].apply(lambda x: math.floor(x * 100) / 100.0)
 
-        payment_df['service date'] = payment_df['service date'].apply(lambda x: datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").date())
+        payment_df['service date'] = payment_df['service date'].apply(lambda x: datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").strftime('%m/%d/%Y'))
         payment_df['invoice number'] = payment_df['invoice number'].apply(lambda x: remove_leg_from_invoice_number(x))
         # print(payment_df['paid amount'].tolist())
         ############### Finish process payment raw data ##############################
@@ -2085,7 +2085,7 @@ class SignoffAndCompare():
 
                 # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment'])
                 if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'] != signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment']:
-                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'signoff payment compare'] = 'Different'
+                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'signoff payment compare'] = 'DIFFERENT'
                 else:
                     pass
 
@@ -2104,7 +2104,24 @@ class SignoffAndCompare():
 
         none_encode_payment_idx = signoff_compare_PA_df.loc[signoff_compare_PA_df['encode payment'] == ""].index.tolist()
         for i in none_encode_payment_idx:
-            signoff_compare_PA_df.ix[i, 'payment result'] = 'Not Found'
+            notFoundServiceDate = signoff_compare_PA_df.ix[i, 'service_date']
+            notFoundCIN = signoff_compare_PA_df.ix[i, 'CIN']
+            maybeReplacedInvoice = payment_df.loc[((payment_df['CIN'] == notFoundCIN) & (payment_df['service date'] == notFoundServiceDate)), 'invoice number'].tolist()
+
+            if maybeReplacedInvoice.__len__() == 0:
+                signoff_compare_PA_df.ix[i, 'payment result'] = 'Not Found'
+
+            else:
+                # print(maybeReplacedInvoice[0])
+                idx_maybeReplacedInvoice = payment_df.loc[payment_df['invoice number'] == maybeReplacedInvoice[0]].index.tolist()
+                replacedReceiptNumber = payment_df.ix[idx_maybeReplacedInvoice[0], 'receipt number']
+                replacedPaidamount = [payment_df.ix[r, 'paid amount'] for r in idx_maybeReplacedInvoice]
+                replacedTotalPaidAmount = round(sum(replacedPaidamount), 2)
+
+                signoff_compare_PA_df.ix[i, 'payment result'] = 'Replaced ' + str(maybeReplacedInvoice[0])
+                signoff_compare_PA_df.ix[i, 'payer claim control number'] = replacedReceiptNumber
+                signoff_compare_PA_df.ix[i, 'payment paid amount'] = replacedTotalPaidAmount
+
 
         ordered_columns = ['service_date', 'invoice number', 'pa_number', 'encode_pa', 'encode_signoff', 'compare_result', 'encode payment',
                                          'signoff payment compare', 'sign-off amount no toll fee', 'sign-off toll fee', 'sign-off Total Amount', 'payment paid amount',
