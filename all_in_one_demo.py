@@ -1,7 +1,7 @@
 '''
 **
 * @Author: Keyuan Wu
-* @Update: 5/25/2018
+* @Update: 06/03/2018
 **
 '''
 import pandas as pd
@@ -1445,7 +1445,18 @@ class SignoffAndCompare():
                 temp_encode_signoff[4] = all_codes.count('A0100SC')
                 # temp_encode[5] = all_codes.count('A0170CG')
                 encode_signoff_array = np.asarray(temp_encode_signoff)
-                price_array = np.array([[25.95], [35], [3.21], [2.25], [25]])
+
+                # 2017.12.31，（不包含31号）之前 A0100 = 25.2
+                # 根据service day 做判断
+                cache_service_day = signoff_df.ix[idx_sign[0], 'SERVICE DAY']
+                thresh_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+
+                if arrow.get(cache_service_day, 'MM/DD/YYYY').date() < thresh_date:
+
+                    price_array = np.array([[25.2], [35], [3.02], [2.25], [25]])
+                else:
+                    price_array = np.array([[25.95], [35], [3.21], [2.25], [25]])
+
                 totalprice = np.dot(encode_signoff_array, price_array)
                 totalprice = str(totalprice)
                 totalprice = float(totalprice[1:-1])
@@ -1600,6 +1611,30 @@ class SignoffAndCompare():
                 service_state.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Drop-off State'])
                 service_zip.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Drop-off Zip'])
                 service_date.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Service Starts'])
+
+                threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+                edi_temp_date = mas_2_df.ix[invoice_num_in_mas_index[0], 'Service Starts']
+
+                if arrow.get(edi_temp_date, 'MM/DD/YYYY').date() < threshhold_date:
+                    info_locker.decoding_info =  {
+                        '0': {'code': 'A0100', 'modifier': "", 'price': 25.2},
+                        '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                        '2': {'code': 'S0215', 'modifier': "", 'price': 3.02},
+                        '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                        '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                        '5': {'code': 'A0170', 'modifier': "CG", }
+                    }
+                else:
+                    info_locker.decoding_info =  {
+                        '0': {'code': 'A0100', 'modifier': "", 'price': 25.95},
+                        '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                        '2': {'code': 'S0215', 'modifier': "", 'price': 3.21},
+                        '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                        '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                        '5': {'code': 'A0170', 'modifier': "CG", }
+                    }
+
+
                 service_npi.append(mas_2_df.ix[invoice_num_in_mas_index[0], 'Ordering Provider ID'])
 
                 claim_amount.append(result_df.ix[invoice_num_in_result_df_index[0], 'sign-off Total Amount'])
@@ -1992,7 +2027,7 @@ class SignoffAndCompare():
         payment_df['paid amount'] = payment_df['paid amount'].apply(lambda x: reverse_minus(x))
         # payment_df['paid amount'] = payment_df['paid amount'].apply(lambda x: math.floor(x * 100) / 100.0)
 
-        payment_df['service date'] = payment_df['service date'].apply(lambda x: datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").date())
+        payment_df['service date'] = payment_df['service date'].apply(lambda x: datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S").strftime('%m/%d/%Y'))
         payment_df['invoice number'] = payment_df['invoice number'].apply(lambda x: remove_leg_from_invoice_number(x))
         # print(payment_df['paid amount'].tolist())
         ############### Finish process payment raw data ##############################
@@ -2050,15 +2085,15 @@ class SignoffAndCompare():
 
                 # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment'])
                 if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'] != signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment']:
-                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'signoff payment compare'] = 'Different'
+                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'signoff payment compare'] = 'DIFFERENT'
                 else:
                     pass
 
                 # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'])
-                if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'] != signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount']:
-                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'Different'
-                else:
+                if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'] <= signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount']:
                     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'OKAY'
+                else:
+                    signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'DIFFERENT'
 
                 # if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'service date'] == "":
                 #     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'Not Found'
@@ -2069,7 +2104,24 @@ class SignoffAndCompare():
 
         none_encode_payment_idx = signoff_compare_PA_df.loc[signoff_compare_PA_df['encode payment'] == ""].index.tolist()
         for i in none_encode_payment_idx:
-            signoff_compare_PA_df.ix[i, 'payment result'] = 'Not Found'
+            notFoundServiceDate = signoff_compare_PA_df.ix[i, 'service_date']
+            notFoundCIN = signoff_compare_PA_df.ix[i, 'CIN']
+            maybeReplacedInvoice = payment_df.loc[((payment_df['CIN'] == notFoundCIN) & (payment_df['service date'] == notFoundServiceDate)), 'invoice number'].tolist()
+
+            if maybeReplacedInvoice.__len__() == 0:
+                signoff_compare_PA_df.ix[i, 'payment result'] = 'Not Found'
+
+            else:
+                # print(maybeReplacedInvoice[0])
+                idx_maybeReplacedInvoice = payment_df.loc[payment_df['invoice number'] == maybeReplacedInvoice[0]].index.tolist()
+                replacedReceiptNumber = payment_df.ix[idx_maybeReplacedInvoice[0], 'receipt number']
+                replacedPaidamount = [payment_df.ix[r, 'paid amount'] for r in idx_maybeReplacedInvoice]
+                replacedTotalPaidAmount = round(sum(replacedPaidamount), 2)
+
+                signoff_compare_PA_df.ix[i, 'payment result'] = 'Replaced ' + str(maybeReplacedInvoice[0])
+                signoff_compare_PA_df.ix[i, 'payer claim control number'] = replacedReceiptNumber
+                signoff_compare_PA_df.ix[i, 'payment paid amount'] = replacedTotalPaidAmount
+
 
         ordered_columns = ['service_date', 'invoice number', 'pa_number', 'encode_pa', 'encode_signoff', 'compare_result', 'encode payment',
                                          'signoff payment compare', 'sign-off amount no toll fee', 'sign-off toll fee', 'sign-off Total Amount', 'payment paid amount',
@@ -2302,6 +2354,8 @@ class Process_Method():
         other_payer_telephone2 = ""
         other_payer_group_number2 = ""
         eligible_result = ""
+        CD = ""
+
 
         for l in range(receipt_df.__len__()):
             row = receipt_df.ix[l, 1]
@@ -2422,6 +2476,14 @@ class Process_Method():
             elif row[0] == 'EB' and row[1] == '1' and row[2] == 'IND':
                 covered_service_codes.append(str(row[3]))
 
+            elif row[0] == 'MSG':
+                find_cnty = re.findall('CNTY', row[1])
+                if find_cnty.__len__() != 0:
+                    CD = row[1].split(" ")[1]
+                    CD = int(re.findall(r'\d+', CD)[0])
+                else:
+                    pass
+
             if other_payer_name.__len__() == 1:
                 other_payer_name1 = other_payer_name[0]
                 other_payer_address1 = other_payer_address[0]
@@ -2448,6 +2510,7 @@ class Process_Method():
                                            'Contact Tel.': contact_tel,
                                            'Plan code': plan_code,
                                            'Covered Codes': str(covered_service_codes),
+                                           'CNTY': CD,
 
                                            'Other Payer1 name': other_payer_name1,
                                            'Other Payer1 address': other_payer_address1,
@@ -2461,7 +2524,6 @@ class Process_Method():
                                            }
 
             if row[0] == 'SE':   # section ends
-                # print(temp_dict)
 
                 ifPlanCodeInDB = SQ.IfplancodeInDB(table='PlanCodeLib', plancode=plan_code)
                 if ifPlanCodeInDB:
@@ -2487,6 +2549,7 @@ class Process_Method():
                                                'Contact Tel.': contact_tel,
                                                'Plan code': plan_code,
                                                'Covered Codes': str(covered_service_codes),
+                                               'CNTY': CD,
 
                                                'Other Payer1 name': other_payer_name1,
                                                'Other Payer1 address': other_payer_address1,
@@ -2529,6 +2592,7 @@ class Process_Method():
                 eligible_result = ""
                 other_payer_telephone = []
                 other_payer_group_number = []
+                CD = ""
 
                 covered_service_codes = []
                 temp_dict = {}
@@ -2536,7 +2600,7 @@ class Process_Method():
         result_dict.pop("")
         result_df = pd.DataFrame(result_dict)
         result_df = result_df.transpose()
-        result_df = result_df[['Invoice number', 'Eligibility Result', 'Service date', 'Patient firstname', 'Patient lastname', 'Plan code', 'Eligible', 'CIN', 'Covered Codes', 'Patient DOB', 'Patient gender',
+        result_df = result_df[['Invoice number', 'Eligibility Result', 'CNTY', 'Service date', 'Patient firstname', 'Patient lastname', 'Plan code', 'Eligible', 'CIN', 'Covered Codes', 'Patient DOB', 'Patient gender',
                                'Payer name', 'Payer address', 'Contact Tel.', 'Other Payer1 name', 'Other Payer1 address', 'Other Payer1 tel.', 'Other Payer1 group number',
                                'Other Payer2 name', 'Other Payer2 address', 'Other Payer2 tel.', 'Other Payer2 group number', 'Other Payer policy number']]
 
@@ -2647,6 +2711,7 @@ class Process_Method():
         if not os.path.exists(file_saving_path):
             os.makedirs(file_saving_path)
             print('Save files to {0}'.format(file_saving_path))
+
         result_df.to_excel(os.path.join(file_saving_path,'276-data-' + str(datetime.today().date()) + '.xlsx'), index=False)
         # 276 data is ready and output an excel file to show 276 data
         # To generate edi 276 file now
@@ -2714,8 +2779,8 @@ class Process_Method():
                     description_status_code = ' -Duplicated Claim'
                 elif status_code == 'F2:562':
                     description_status_code = ' -Wrong NPI'
-                # elif status_code == 'P0:252':
-                #     description_status_code = ' -No PA Number'
+                elif status_code == 'D0:21':
+                    description_status_code = ' -Missing or invalid info'
                 # elif status_code == 'F2:84':
                 #     description_status_code = ' -Service Not Authorized'
                 else:
@@ -2725,7 +2790,7 @@ class Process_Method():
                     result = 'Paid'
                 elif total_paid_amt == 0:
                     if total_expected_amt == 0:
-                        result = 'Error'
+                        result = 'Error' + description_status_code
                     else:
                         result = 'Denied' + description_status_code
                 else:
@@ -2748,6 +2813,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2769,6 +2836,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2790,6 +2859,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2811,6 +2882,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2832,6 +2905,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -2853,6 +2928,8 @@ class Process_Method():
                 status_code2 = next_row[1]
                 if status_code2 == 'P0:252':
                     description_status_code = ' -No PA Number'
+                elif status_code2 == 'F2:54':
+                    description_status_code = ' -Duplicated Claim'
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
@@ -3119,17 +3196,24 @@ class Process_Method():
         result['Service Date'] = service_date
         result['Code'] = all_codes
 
-        # file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+        last_line = len(result) + 1
+        result.ix[last_line, 'Claim Number'] = 'Total:'
+        result.ix[last_line, 'Expected Amount'] = sum(expect_amount)
+        result.ix[last_line, 'Paid Amount'] = sum(paid_amount)
+        result.ix[last_line, 'Patient Firstname'] = abs(result.ix[last_line, 'Expected Amount'] - result.ix[last_line, 'Paid Amount'])
 
-        # current_path = os.getcwd()
-        # daily_folder = str(datetime.today().date())
-        # basename = info_locker.base_info['BaseName']
-        # file_saving_path = os.path.join(current_path, basename, daily_folder)
-        # if not os.path.exists(file_saving_path):
-        #     os.makedirs(file_saving_path)
-        #     print('Save files to {0}'.format(file_saving_path))
 
-        result.to_excel('835 Test.xlsx', index=False)
+        file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder)
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
+        result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
 
 
 class window(QMainWindow):
@@ -3222,11 +3306,8 @@ class window(QMainWindow):
             self.new_837_window.show()
 
     def open_270_271_subwindow(self):
-        if datetime.today().date().day == 1:
-            # reset 271 manual check lib
-            SQ = mysqlite('EDI.db')
-            SQ.delete_all_manually271Lib('ManuallyCheck271')
-            QMessageBox.about(self, 'Message', 'Manual Check Lib has been reset!')
+        SQ = mysqlite('EDI.db')
+        SQ.delete_lastmonth_manually271Lib(table='ManuallyCheck271')
 
         if not info_locker.base_info:
             QMessageBox.about(self, 'Message', 'Select Base first!')
@@ -3296,7 +3377,7 @@ class subwindow_837(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('Data Claims P2:')
             self.textbox1 = QLineEdit()
             btnSelect1 = QPushButton('...')
@@ -3397,7 +3478,7 @@ class subwindow_270_271(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab2(self):
-            self.tab2.layout = QGridLayout(self)
+            self.tab2.layout = QGridLayout()
             nameLabel1 = QLabel('MAS Raw File:')
             self.textboxTab2_1 = QLineEdit()
             btnSelectTab2_1 = QPushButton('...')
@@ -3415,7 +3496,7 @@ class subwindow_270_271(QMainWindow):
             self.tab2.setLayout(self.tab2.layout)
 
         def mytab3(self):
-            self.tab3.layout = QGridLayout(self)
+            self.tab3.layout = QGridLayout()
             nameLabel1 = QLabel('Operr 10001:')
             self.textboxTab3_1 = QLineEdit()
             btnSelectTab3_1 = QPushButton('...')
@@ -3577,7 +3658,7 @@ class subwindow_manually271Lib(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('- Add/Update -')
             nameLabel2 = QLabel('Eligible:')
             nameLabel3 = QLabel('First Name:')
@@ -3678,7 +3759,7 @@ class subwindow_manually271Lib(QMainWindow):
 class ShowManualCheck_subwindow(QMainWindow):
     def __init__(self):
         super(ShowManualCheck_subwindow, self).__init__()
-        self.setGeometry(600, 600, 750, 400)
+        self.setGeometry(600, 600, 700, 380)
 
         self.setWindowTitle('EDI GUI')
         self.home()
@@ -3750,6 +3831,7 @@ class EDI271_pending_subwindow(QMainWindow):
             for c in range(countCol):
                 self.tableWidget.setItem(r, c, QTableWidgetItem(str(self.data.ix[r, c])))
 
+
         self.tableWidget.doubleClicked.connect(self.clickAndChange)
 
         self.tableWidget.setHorizontalHeaderLabels(headers)
@@ -3778,24 +3860,28 @@ class subwindow_276_277(QMainWindow):
             self.file_name6_2 = None
             self.file_name6_3 = None
             self.file_name6_4 = None
+            self.file_name8 = None
             self.df = pd.DataFrame()
 
             self.tabs = QTabWidget()
 
             self.tab6 = QWidget()
             self.tab7 = QWidget()
+            self.tab8 = QWidget()
 
             self.tabs.addTab(self.tab6, '-*Upload*-')
             self.tabs.addTab(self.tab7, '-*Payment Check*-')
+            self.tabs.addTab(self.tab8, '-*835*-')
 
             self.mytab6()
             self.mytab7()
+            self.mytab8()
 
             self.layout.addWidget(self.tabs)
             self.setLayout(self.layout)
 
         def mytab6(self):
-            self.tab6.layout = QGridLayout(self)
+            self.tab6.layout = QGridLayout()
             nameLabel1 = QLabel('Operr Claim P2:')
             self.textboxTab6_1 = QLineEdit()
             btnSelectTab6_1 = QPushButton('...')
@@ -3817,7 +3903,7 @@ class subwindow_276_277(QMainWindow):
             self.tab6.setLayout(self.tab6.layout)
 
         def mytab7(self):
-            self.tab7.layout = QGridLayout(self)
+            self.tab7.layout = QGridLayout()
             self.nameLabel3 = QLabel("Operr 90001:")
             self.textboxTab6_3 = QLineEdit()
             self.btnSelectTab6_3 = QPushButton('...')
@@ -3839,6 +3925,23 @@ class subwindow_276_277(QMainWindow):
             self.tab7.layout.addWidget(self.btnProcess, 2, 2)
             self.tab7.setLayout(self.tab7.layout)
 
+        def mytab8(self):
+            self.tab8.layout = QGridLayout()
+
+            self.nameLabel_835_1 = QLabel('835 File:')
+            self.textboxTab8_1 = QLineEdit()
+            self.btnSelectTab8 = QPushButton('...')
+            self.btnSelectTab8.clicked.connect(self.select_fileTab8)
+
+            self.btnRun = QPushButton('Run')
+            self.btnRun.clicked.connect(self.process835)
+
+            self.tab8.layout.addWidget(self.nameLabel_835_1, 0, 0)
+            self.tab8.layout.addWidget(self.textboxTab8_1, 0, 1)
+            self.tab8.layout.addWidget(self.btnSelectTab8, 0, 2)
+            self.tab8.layout.addWidget(self.btnRun, 1, 2)
+            self.tab8.setLayout(self.tab8.layout)
+
         def select_fileTab6_1(self):
             self.file_name6_1, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
@@ -3858,6 +3961,11 @@ class subwindow_276_277(QMainWindow):
             self.file_name6_4, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
             self.textboxTab6_4.setText(self.file_name6_4)
+
+        def select_fileTab8(self):
+            self.file_name8, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textboxTab8_1.setText(self.file_name8)
 
         def close_application(self):
             choice = QMessageBox.question(self, 'Message',
@@ -3901,6 +4009,20 @@ class subwindow_276_277(QMainWindow):
                     P.process_276_receipt(self.file_name6_3, self.file_name6_4, lined_file=False)
                     QMessageBox.about(self, 'Message', 'File Processed Successfully!')
 
+            else:
+                pass
+
+        def process835(self):
+            choice = QMessageBox.question(self, 'Message', "Are you sure to process EDI 276's 277?",
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+            if choice == QMessageBox.Yes:
+                if not self.file_name8:
+                    QMessageBox.about(self, 'Message', 'Error!')
+                else:
+                    P = Process_Method()
+                    P.process_835(self.file_name8, lined_file=False)
+                    QMessageBox.about(self, 'Message', 'File Processed Successfully!')
             else:
                 pass
 
@@ -3949,7 +4071,7 @@ class subwindow_MAS(QMainWindow):
             ################ tab 1  Process MAS from RAW DATA
 
         def mytab2(self):
-            self.tab2.layout = QGridLayout(self)
+            self.tab2.layout = QGridLayout()
             nameLabel1 = QLabel('MAS Raw Data:')
             self.textbox1 = QLineEdit()
             btnSelect1 = QPushButton('...')
@@ -3981,7 +4103,7 @@ class subwindow_MAS(QMainWindow):
 
         def mytab3(self):
 
-            self.tab3.layout = QGridLayout(self)
+            self.tab3.layout = QGridLayout()
             nameLabelTab3_1 = QLabel('Sign-off:')
             self.textboxTab3_1 = QLineEdit()
             btnSelectTab3_1 = QPushButton('...')
@@ -4024,7 +4146,7 @@ class subwindow_MAS(QMainWindow):
             self.tab3.setLayout(self.tab3.layout)
 
         def mytab4(self):
-            self.tab4.layout = QGridLayout(self)
+            self.tab4.layout = QGridLayout()
             nameLabelTab4_1 = QLabel('MAS Correction:')
             self.textboxTab4_1 = QLineEdit()
             btnSelectTab4_1 = QPushButton('...')
@@ -4241,7 +4363,7 @@ class subwindow_plancode(QMainWindow):
 
         def mytab4(self):
             # plan code library
-            self.tab4.layout = QGridLayout(self)
+            self.tab4.layout = QGridLayout()
             nameLabel1 = QLabel('- Add/Update -')
             nameLabel2 = QLabel('Plan Code:')
             nameLabel3 = QLabel('Provider Name:')
@@ -4396,7 +4518,7 @@ class subwindow_processTXT(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab5(self):
-            self.tab5.layout = QGridLayout(self)
+            self.tab5.layout = QGridLayout()
             nameLabel1 = QLabel('TXT File:')
             self.textboxTab5_1 = QLineEdit()
             btnToLines = QPushButton('To Lines')
@@ -4484,7 +4606,7 @@ class subwindow_addbase(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel0 = QLabel('Add Base:')
             nameLabel1 = QLabel('Name:')
             nameLabel2 = QLabel('Address:')
@@ -4656,7 +4778,7 @@ class subwindow_addDriver(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('Fleet:')
             nameLabel2 = QLabel('Base:')
             nameLabel3 = QLabel('FirstName:')
@@ -4843,7 +4965,7 @@ class MyEDITabWidget(QTabWidget):
         self.setLayout(self.layout)
 
     def mytab1(self):
-        self.tab1.layout = QGridLayout(self)
+        self.tab1.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 837:')
         self.textbox1 = QLineEdit()
         btnSelect1 = QPushButton('...')
@@ -4861,7 +4983,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab1.setLayout(self.tab1.layout)
 
     def mytab2(self):
-        self.tab2.layout = QGridLayout(self)
+        self.tab2.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 270:')
         self.textboxTab2_1 = QLineEdit()
         btnSelectTab2_1 = QPushButton('...')
@@ -4879,7 +5001,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab2.setLayout(self.tab2.layout)
 
     def mytab3(self):
-        self.tab3.layout = QGridLayout(self)
+        self.tab3.layout = QGridLayout()
         nameLabel1 = QLabel('271 File:')
         self.textboxTab3_1 = QLineEdit()
         btnSelectTab3_1 = QPushButton('...')
@@ -4901,7 +5023,7 @@ class MyEDITabWidget(QTabWidget):
 
     def mytab4(self):
         # plan code library
-        self.tab4.layout = QGridLayout(self)
+        self.tab4.layout = QGridLayout()
         nameLabel1 = QLabel('- Add/Update -')
         nameLabel2 = QLabel('Plan Code:')
         nameLabel3 = QLabel('Provider Name:')
@@ -4944,7 +5066,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab4.setLayout(self.tab4.layout)
 
     def mytab5(self):
-        self.tab5.layout = QGridLayout(self)
+        self.tab5.layout = QGridLayout()
         nameLabel1 = QLabel('File:')
         self.textboxTab5_1 = QLineEdit()
         btnToLines = QPushButton('ToLines')
@@ -4962,7 +5084,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab5.setLayout(self.tab5.layout)
 
     def mytab6(self):
-        self.tab6.layout = QGridLayout(self)
+        self.tab6.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 837:')
         self.textboxTab6_1 = QLineEdit()
         btnSelectTab6_1 = QPushButton('...')
@@ -5269,7 +5391,7 @@ class MyTabWidget(QTabWidget):
 
 ################ tab 1  Process MAS from RAW DATA
     def mytab1(self):
-        self.tab1.layout = QGridLayout(self)
+        self.tab1.layout = QGridLayout()
         nameLabel = QLabel('MAS:')
         self.textbox = QLineEdit()
         btnSelect = QPushButton('...')
@@ -5296,7 +5418,7 @@ class MyTabWidget(QTabWidget):
 
 ################ tab 2 Sign off
     def mytab2(self):
-        self.tab2.layout = QGridLayout(self)
+        self.tab2.layout = QGridLayout()
         nameLabel1 = QLabel('Processed MAS:')
         self.textbox1 = QLineEdit()
         btnSelect1 = QPushButton('...')
@@ -5327,7 +5449,7 @@ class MyTabWidget(QTabWidget):
 ################### tab3 SIGN OFF compares with PA roast ################
     def mytab3(self):
 
-        self.tab3.layout = QGridLayout(self)
+        self.tab3.layout = QGridLayout()
         nameLabelTab3_1 = QLabel('Sign-off:')
         self.textboxTab3_1 = QLineEdit()
         btnSelectTab3_1 = QPushButton('...')
@@ -5370,7 +5492,7 @@ class MyTabWidget(QTabWidget):
         self.tab3.setLayout(self.tab3.layout)
 
     def mytab4(self):
-        self.tab4.layout = QGridLayout(self)
+        self.tab4.layout = QGridLayout()
         nameLabelTab4_1 = QLabel('MAS Correction:')
         self.textboxTab4_1 = QLineEdit()
         btnSelectTab4_1 = QPushButton('...')
@@ -5596,9 +5718,19 @@ class mysqlite():
         self.cursor.execute('DELETE FROM {0} WHERE cin="{1}"'.format(table, cin))
         self.conn.commit()
 
-    def delete_all_manually271Lib(self, table):
-        self.cursor.execute('DELETE FROM {0}'.format(table))
-        self.conn.commit()
+    def delete_lastmonth_manually271Lib(self, table):
+        self.cursor.execute(f'SELECT UpdateDate, CIN FROM {table}')
+        response = self.cursor.fetchall()
+        current_month = arrow.now().date().month
+        
+        for res in response:
+            date, cin = res
+            month_of_date = arrow.get(date).date().month
+            if month_of_date != current_month:
+                self.delete_manually271Lib(table, cin)
+                print(f'CIN: {cin} is expired!')
+            else:
+                pass
 
     def generate_excel_from_manually271Lib(self, table, tofile=True):
         date = datetime.today().date()
