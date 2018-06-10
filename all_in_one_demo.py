@@ -3377,7 +3377,7 @@ class subwindow_837(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('Data Claims P2:')
             self.textbox1 = QLineEdit()
             btnSelect1 = QPushButton('...')
@@ -3478,7 +3478,7 @@ class subwindow_270_271(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab2(self):
-            self.tab2.layout = QGridLayout(self)
+            self.tab2.layout = QGridLayout()
             nameLabel1 = QLabel('MAS Raw File:')
             self.textboxTab2_1 = QLineEdit()
             btnSelectTab2_1 = QPushButton('...')
@@ -3496,7 +3496,7 @@ class subwindow_270_271(QMainWindow):
             self.tab2.setLayout(self.tab2.layout)
 
         def mytab3(self):
-            self.tab3.layout = QGridLayout(self)
+            self.tab3.layout = QGridLayout()
             nameLabel1 = QLabel('Operr 10001:')
             self.textboxTab3_1 = QLineEdit()
             btnSelectTab3_1 = QPushButton('...')
@@ -3658,7 +3658,7 @@ class subwindow_manually271Lib(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('- Add/Update -')
             nameLabel2 = QLabel('Eligible:')
             nameLabel3 = QLabel('First Name:')
@@ -3881,7 +3881,7 @@ class subwindow_276_277(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab6(self):
-            self.tab6.layout = QGridLayout(self)
+            self.tab6.layout = QGridLayout()
             nameLabel1 = QLabel('Operr Claim P2:')
             self.textboxTab6_1 = QLineEdit()
             btnSelectTab6_1 = QPushButton('...')
@@ -3903,7 +3903,7 @@ class subwindow_276_277(QMainWindow):
             self.tab6.setLayout(self.tab6.layout)
 
         def mytab7(self):
-            self.tab7.layout = QGridLayout(self)
+            self.tab7.layout = QGridLayout()
             self.nameLabel3 = QLabel("Operr 90001:")
             self.textboxTab6_3 = QLineEdit()
             self.btnSelectTab6_3 = QPushButton('...')
@@ -3926,7 +3926,7 @@ class subwindow_276_277(QMainWindow):
             self.tab7.setLayout(self.tab7.layout)
 
         def mytab8(self):
-            self.tab8.layout = QGridLayout(self)
+            self.tab8.layout = QGridLayout()
 
             self.nameLabel_835_1 = QLabel('835 File:')
             self.textboxTab8_1 = QLineEdit()
@@ -4071,7 +4071,7 @@ class subwindow_MAS(QMainWindow):
             ################ tab 1  Process MAS from RAW DATA
 
         def mytab2(self):
-            self.tab2.layout = QGridLayout(self)
+            self.tab2.layout = QGridLayout()
             nameLabel1 = QLabel('MAS Raw Data:')
             self.textbox1 = QLineEdit()
             btnSelect1 = QPushButton('...')
@@ -4103,7 +4103,7 @@ class subwindow_MAS(QMainWindow):
 
         def mytab3(self):
 
-            self.tab3.layout = QGridLayout(self)
+            self.tab3.layout = QGridLayout()
             nameLabelTab3_1 = QLabel('Sign-off:')
             self.textboxTab3_1 = QLineEdit()
             btnSelectTab3_1 = QPushButton('...')
@@ -4146,7 +4146,7 @@ class subwindow_MAS(QMainWindow):
             self.tab3.setLayout(self.tab3.layout)
 
         def mytab4(self):
-            self.tab4.layout = QGridLayout(self)
+            self.tab4.layout = QGridLayout()
             nameLabelTab4_1 = QLabel('MAS Correction:')
             self.textboxTab4_1 = QLineEdit()
             btnSelectTab4_1 = QPushButton('...')
@@ -4363,7 +4363,7 @@ class subwindow_plancode(QMainWindow):
 
         def mytab4(self):
             # plan code library
-            self.tab4.layout = QGridLayout(self)
+            self.tab4.layout = QGridLayout()
             nameLabel1 = QLabel('- Add/Update -')
             nameLabel2 = QLabel('Plan Code:')
             nameLabel3 = QLabel('Provider Name:')
@@ -4518,7 +4518,7 @@ class subwindow_processTXT(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab5(self):
-            self.tab5.layout = QGridLayout(self)
+            self.tab5.layout = QGridLayout()
             nameLabel1 = QLabel('TXT File:')
             self.textboxTab5_1 = QLineEdit()
             btnToLines = QPushButton('To Lines')
@@ -4606,7 +4606,7 @@ class subwindow_addbase(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel0 = QLabel('Add Base:')
             nameLabel1 = QLabel('Name:')
             nameLabel2 = QLabel('Address:')
@@ -4778,7 +4778,7 @@ class subwindow_addDriver(QMainWindow):
             self.setLayout(self.layout)
 
         def mytab1(self):
-            self.tab1.layout = QGridLayout(self)
+            self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('Fleet:')
             nameLabel2 = QLabel('Base:')
             nameLabel3 = QLabel('FirstName:')
@@ -4965,7 +4965,7 @@ class MyEDITabWidget(QTabWidget):
         self.setLayout(self.layout)
 
     def mytab1(self):
-        self.tab1.layout = QGridLayout(self)
+        self.tab1.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 837:')
         self.textbox1 = QLineEdit()
         btnSelect1 = QPushButton('...')
@@ -4983,7 +4983,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab1.setLayout(self.tab1.layout)
 
     def mytab2(self):
-        self.tab2.layout = QGridLayout(self)
+        self.tab2.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 270:')
         self.textboxTab2_1 = QLineEdit()
         btnSelectTab2_1 = QPushButton('...')
@@ -5001,7 +5001,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab2.setLayout(self.tab2.layout)
 
     def mytab3(self):
-        self.tab3.layout = QGridLayout(self)
+        self.tab3.layout = QGridLayout()
         nameLabel1 = QLabel('271 File:')
         self.textboxTab3_1 = QLineEdit()
         btnSelectTab3_1 = QPushButton('...')
@@ -5023,7 +5023,7 @@ class MyEDITabWidget(QTabWidget):
 
     def mytab4(self):
         # plan code library
-        self.tab4.layout = QGridLayout(self)
+        self.tab4.layout = QGridLayout()
         nameLabel1 = QLabel('- Add/Update -')
         nameLabel2 = QLabel('Plan Code:')
         nameLabel3 = QLabel('Provider Name:')
@@ -5066,7 +5066,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab4.setLayout(self.tab4.layout)
 
     def mytab5(self):
-        self.tab5.layout = QGridLayout(self)
+        self.tab5.layout = QGridLayout()
         nameLabel1 = QLabel('File:')
         self.textboxTab5_1 = QLineEdit()
         btnToLines = QPushButton('ToLines')
@@ -5084,7 +5084,7 @@ class MyEDITabWidget(QTabWidget):
         self.tab5.setLayout(self.tab5.layout)
 
     def mytab6(self):
-        self.tab6.layout = QGridLayout(self)
+        self.tab6.layout = QGridLayout()
         nameLabel1 = QLabel('Data for 837:')
         self.textboxTab6_1 = QLineEdit()
         btnSelectTab6_1 = QPushButton('...')
@@ -5391,7 +5391,7 @@ class MyTabWidget(QTabWidget):
 
 ################ tab 1  Process MAS from RAW DATA
     def mytab1(self):
-        self.tab1.layout = QGridLayout(self)
+        self.tab1.layout = QGridLayout()
         nameLabel = QLabel('MAS:')
         self.textbox = QLineEdit()
         btnSelect = QPushButton('...')
@@ -5418,7 +5418,7 @@ class MyTabWidget(QTabWidget):
 
 ################ tab 2 Sign off
     def mytab2(self):
-        self.tab2.layout = QGridLayout(self)
+        self.tab2.layout = QGridLayout()
         nameLabel1 = QLabel('Processed MAS:')
         self.textbox1 = QLineEdit()
         btnSelect1 = QPushButton('...')
@@ -5449,7 +5449,7 @@ class MyTabWidget(QTabWidget):
 ################### tab3 SIGN OFF compares with PA roast ################
     def mytab3(self):
 
-        self.tab3.layout = QGridLayout(self)
+        self.tab3.layout = QGridLayout()
         nameLabelTab3_1 = QLabel('Sign-off:')
         self.textboxTab3_1 = QLineEdit()
         btnSelectTab3_1 = QPushButton('...')
@@ -5492,7 +5492,7 @@ class MyTabWidget(QTabWidget):
         self.tab3.setLayout(self.tab3.layout)
 
     def mytab4(self):
-        self.tab4.layout = QGridLayout(self)
+        self.tab4.layout = QGridLayout()
         nameLabelTab4_1 = QLabel('MAS Correction:')
         self.textboxTab4_1 = QLineEdit()
         btnSelectTab4_1 = QPushButton('...')
