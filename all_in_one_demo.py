@@ -5833,14 +5833,6 @@ class mysqlite():
 
 
 if __name__ == '__main__':
-
-    # current_path = os.getcwd()
-    # daily_folder = str(datetime.today().date())
-    # file_saving_path = os.path.join(current_path, daily_folder)
-    # if not os.path.exists(file_saving_path):
-    #     os.makedirs(file_saving_path)
-    #     print('Save files to {0}'.format(file_saving_path))
-
     chineseDragon = '''
         ......................................&&.........................
         ....................................&&&..........................
@@ -5981,7 +5973,6 @@ if __name__ == '__main__':
         SQ.cursor.close()
         SQ.conn.close()
         sys.exit(app.exec_())
-
     run()
 
 
