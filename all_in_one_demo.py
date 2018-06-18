@@ -1031,6 +1031,7 @@ class SignoffAndCompare():
 
         # check if there is duplicated trip in total jobs
         duplicated_idx = total_job_df.duplicated(subset=['TripID'], keep='last')
+
         if any(duplicated_idx):
             only_duplicated_trips_in_totaljobs = total_job_df.loc[duplicated_idx]
 
@@ -3234,6 +3235,10 @@ class window(QMainWindow):
         btnQuit.clicked.connect(self.close_application)
         btnQuit.resize(100, 40)
         btnQuit.move(380, 230)
+
+
+        _versionLabel = QLabel(_version, self)
+        _versionLabel.move(10, 250)
 
         self.show()
 
@@ -5909,17 +5914,6 @@ if __name__ == '__main__':
                     __\ | |  | | /__
                     (vvv(VVV)(VVV)vvv)
                     '''
-    operr = ''' 
-    
-         *****  ******  ******* ******  ******
-        *     * *     * *       *     * *     *
-        *     * *     * *       *     * *     *
-        *     * ******  ******  ******  ******
-        *     * *       *       *   *   *   *
-        *     * *       *       *    *  *    *
-         *****  *       ******* *     * *     *
-        
-        '''
     operr_billing = '''
       ______   .______    _______ .______      .______      
      /  __  \  |   _  \  |   ____||   _  \     |   _  \     
@@ -6005,10 +5999,14 @@ if __name__ == '__main__':
      (                                  -_-  --~           
                                                    '''
 
-    fig_list = [operr, operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d,
-                chineseDragon, doge, alpaca, dragon, operr]
+    fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d,
+                chineseDragon, doge, alpaca, dragon]
     fig_list = np.random.permutation(fig_list)
+    _version = "0.6.18"
+
     print(fig_list[0])
+    print('\n')
+    print(f'OPERR BILLING VERISON: {_version}')
 
     def run():
         SQ = mysqlite('EDI.db')
