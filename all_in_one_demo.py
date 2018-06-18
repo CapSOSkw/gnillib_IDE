@@ -26,7 +26,7 @@ from shapely.geometry import Point, Polygon
 import arrow
 
 
-class info_locker(object):
+class info_locker():
     nyc_zip = [10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009,
                10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024,
                10025, 10026,
@@ -866,6 +866,7 @@ class Process_MAS():
 
         else:
             cd_df = self.add_AB_leg()
+            # cd_df = self.raw_df
 
         cd_df['Code3'] = ""
         cd_df['Code3 Modifier'] = ""
@@ -963,56 +964,6 @@ class Process_MAS():
                         cd_df.ix[i, "Code3"] = "A0100"
                         cd_df.ix[i, "Code3 Modifier"] = "SC"
 
-            #             # the same zip code across 110st
-            # if ((cd_df.ix[i, "Pick-up Zip"] in info_locker.zip_across_110) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.zip_across_110)) and \
-            #         (cd_df.ix[i, "Leg Mileage"] >= 3):
-            #
-            #     pickup_address = re.sub(' +', " ", cd_df.ix[i, 'Pick-up Address']) + " " + cd_df.ix[i, 'Pick-up City']
-            #     dropoff_address = re.sub(' +', " ", cd_df.ix[i, 'Drop-off Address']) + " " + cd_df.ix[i, 'Drop-off City']
-            #     pick_lat, pick_lng = Process_Method().google2geo(pickup_address)
-            #     drop_lat, drop_lng = Process_Method().google2geo(dropoff_address)
-            #     is_pick_under_110 = Process_Method().is_under_110st(pick_lat, pick_lng)
-            #     is_drop_under_110 = Process_Method().is_under_110st(drop_lat, drop_lng)
-            #     if (is_pick_under_110 == True and is_drop_under_110 == False) or \
-            #             (is_pick_under_110 == False and is_drop_under_110 == True):
-            #
-            #         if cd_df.ix[i, "Code2"].__len__() == 0:
-            #             cd_df.ix[i, "Code2"] = "A0100"
-            #             cd_df.ix[i, "Code2 Modifier"] = "SC"
-            #
-            #         else:
-            #             cd_df.ix[i, "Code3"] = "A0100"
-            #             cd_df.ix[i, "Code3 Modifier"] = "SC"
-            #
-            # #use zip code to deal with 110st issue
-            # if (((cd_df.ix[i, "Pick-up Zip"] in info_locker.zip_across_110) and (cd_df.ix[i, "Drop-off Zip"] not in info_locker.zip_across_110)) or
-            #         ((cd_df.ix[i, "Pick-up Zip"] not in info_locker.zip_across_110) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.zip_across_110))) and \
-            #         (cd_df.ix[i, "Leg Mileage"] >= 3):
-            #
-            #     pickup_address = re.sub(' +', " ", cd_df.ix[i, 'Pick-up Address']) + " " + cd_df.ix[i, 'Pick-up City']
-            #     dropoff_address = re.sub(' +', " ", cd_df.ix[i, 'Drop-off Address']) + " " + cd_df.ix[
-            #         i, 'Drop-off City']
-            #     pick_lat, pick_lng = Process_Method().google2geo(pickup_address)
-            #     drop_lat, drop_lng = Process_Method().google2geo(dropoff_address)
-            #     is_pick_under_110 = Process_Method().is_under_110st(pick_lat, pick_lng)
-            #     is_drop_under_110 = Process_Method().is_under_110st(drop_lat, drop_lng)
-            #
-            #     if ((is_pick_under_110 == False) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.under_110st_zip)) or \
-            #             ((is_pick_under_110 == False) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.zip_across_110) and is_drop_under_110==True) or \
-            #             ((cd_df.ix[i, "Pick-up Zip"] in info_locker.under_110st_zip) and (cd_df.ix[i, "Pick-up Zip"] not in info_locker.zip_across_110) and (is_drop_under_110 == False)) or \
-            #             ((cd_df.ix[i, "Pick-up Zip"] in info_locker.zip_across_110) and (is_pick_under_110==True) and (is_drop_under_110 == False)) or \
-            #             ((cd_df.ix[i, "Pick-up Zip"] in info_locker.zip_across_110) and (is_pick_under_110 == True) and (cd_df.ix[i, "Drop-off Zip"] not in info_locker.under_110st_zip)) or \
-            #             ((cd_df.ix[i, "Pick-up Zip"] not in info_locker.under_110st_zip) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.under_110st_zip) and (cd_df.ix[i, "Drop-off Zip"] not in info_locker.zip_across_110)) or\
-            #             ((cd_df.ix[i, "Pick-up Zip"] not in info_locker.under_110st_zip) and (cd_df.ix[i, "Drop-off Zip"] in info_locker.zip_across_110) and (is_drop_under_110==True)):
-            #             # ((cd_df.ix[i, "Pick-up Zip"] not in info_locker.zip_across_110) and (is_drop_under_110 == False))
-            #
-            #         if cd_df.ix[i, "Code2"].__len__() == 0:
-            #             cd_df.ix[i, "Code2"] = "A0100"
-            #             cd_df.ix[i, "Code2 Modifier"] = "SC"
-            #
-            #         elif (cd_df.ix[i, "Code2"]!="A0100" and cd_df.ix[i, "Code2 Modifier"] != 'SC'):
-            #             cd_df.ix[i, "Code3"] = "A0100"
-            #             cd_df.ix[i, "Code3 Modifier"] = "SC"
 
             if ((cd_df.ix[i, "Pick-up Zip"] in info_locker.zip_across_110) or (cd_df.ix[i, "Drop-off Zip"] in info_locker.zip_across_110)) and (cd_df.ix[i, "Leg Mileage"] >= 3):
 
@@ -1033,8 +984,6 @@ class Process_MAS():
                     else:
                         cd_df.ix[i, "Code3"] = "A0100"
                         cd_df.ix[i, "Code3 Modifier"] = "SC"
-
-
 
         temp_df['service_date'] = cd_df['Service Starts'].apply(lambda x: datetime.strptime(x, '%m/%d/%Y').date())
         min_service_date = min(temp_df['service_date'])
@@ -5833,14 +5782,6 @@ class mysqlite():
 
 
 if __name__ == '__main__':
-
-    # current_path = os.getcwd()
-    # daily_folder = str(datetime.today().date())
-    # file_saving_path = os.path.join(current_path, daily_folder)
-    # if not os.path.exists(file_saving_path):
-    #     os.makedirs(file_saving_path)
-    #     print('Save files to {0}'.format(file_saving_path))
-
     chineseDragon = '''
         ......................................&&.........................
         ....................................&&&..........................
@@ -5948,8 +5889,7 @@ if __name__ == '__main__':
               └─┐  ┐  ┌───────┬──┐  ┌──┘
                 │ ─┤ ─┤       │ ─┤ ─┤
                 └──┴──┘       └──┴──┘
-                    神兽保佑
-                    NO BUG!
+
             '''
     dragon = '''
                   ___====-_  _-====___
@@ -5969,8 +5909,104 @@ if __name__ == '__main__':
                     __\ | |  | | /__
                     (vvv(VVV)(VVV)vvv)
                     '''
+    operr = ''' 
+    
+         *****  ******  ******* ******  ******
+        *     * *     * *       *     * *     *
+        *     * *     * *       *     * *     *
+        *     * ******  ******  ******  ******
+        *     * *       *       *   *   *   *
+        *     * *       *       *    *  *    *
+         *****  *       ******* *     * *     *
+        
+        '''
+    operr_billing = '''
+      ______   .______    _______ .______      .______      
+     /  __  \  |   _  \  |   ____||   _  \     |   _  \     
+    |  |  |  | |  |_)  | |  |__   |  |_)  |    |  |_)  |    
+    |  |  |  | |   ___/  |   __|  |      /     |      /     
+    |  `--'  | |  |      |  |____ |  |\  \----.|  |\  \----.
+     \______/  | _|      |_______|| _| `._____|| _| `._____|
+                                                            
+    .______    __   __       __       __  .__   __.   _______ 
+    |   _  \  |  | |  |     |  |     |  | |  \ |  |  /  _____|
+    |  |_)  | |  | |  |     |  |     |  | |   \|  | |  |  __  
+    |   _  <  |  | |  |     |  |     |  | |  . `  | |  | |_ | 
+    |  |_)  | |  | |  `----.|  `----.|  | |  |\   | |  |__| | 
+    |______/  |__| |_______||_______||__| |__| \__|  \______| '''
+    operr_billing3_D = '''
+    :'#######::'########::'########:'########::'########::
+    '##.... ##: ##.... ##: ##.....:: ##.... ##: ##.... ##:
+     ##:::: ##: ##:::: ##: ##::::::: ##:::: ##: ##:::: ##:
+     ##:::: ##: ########:: ######::: ########:: ########::
+     ##:::: ##: ##.....::: ##...:::: ##.. ##::: ##.. ##:::
+     ##:::: ##: ##:::::::: ##::::::: ##::. ##:: ##::. ##::
+    . #######:: ##:::::::: ########: ##:::. ##: ##:::. ##:
+    :.......:::..:::::::::........::..:::::..::..:::::..::
+    '########::'####:'##:::::::'##:::::::'####:'##::: ##::'######:::
+     ##.... ##:. ##:: ##::::::: ##:::::::. ##:: ###:: ##:'##... ##::
+     ##:::: ##:: ##:: ##::::::: ##:::::::: ##:: ####: ##: ##:::..:::
+     ########::: ##:: ##::::::: ##:::::::: ##:: ## ## ##: ##::'####:
+     ##.... ##:: ##:: ##::::::: ##:::::::: ##:: ##. ####: ##::: ##::
+     ##:::: ##:: ##:: ##::::::: ##:::::::: ##:: ##:. ###: ##::: ##::
+     ########::'####: ########: ########:'####: ##::. ##:. ######:::
+    ........:::....::........::........::....::..::::..:::......::::
+    '''
+    operr_billing_smisome1 = '''
+        ___       ___       ___       ___       ___   
+       /\  \     /\  \     /\  \     /\  \     /\  \  
+      /::\  \   /::\  \   /::\  \   /::\  \   /::\  \ 
+     /:/\:\__\ /::\:\__\ /::\:\__\ /::\:\__\ /::\:\__
+     \:\/:/  / \/\::/  / \:\:\/  / \;:::/  / \;:::/  /
+      \::/  /     \/__/   \:\/  /   |:\/__/   |:\/__/ 
+       \/__/               \/__/     \|__|     \|__|  
+        ___       ___       ___       ___       ___       ___       ___   
+       /\  \     /\  \     /\__\     /\__\     /\  \     /\__\     /\  \  
+      /::\  \   _\:\  \   /:/  /    /:/  /    _\:\  \   /:| _|_   /::\  \ 
+     /::\:\__\ /\/::\__\ /:/__/    /:/__/    /\/::\__\ /::|/\__\ /:/\:\__
+     \:\::/  / \::/\/__/ \:\  \    \:\  \    \::/\/__/ \/|::/  / \:\:\/__/
+      \::/  /   \:\__\    \:\__\    \:\__\    \:\__\     |:/  /   \::/  / 
+       \/__/     \/__/     \/__/     \/__/     \/__/     \/__/     \/__/  '''
+    operr_billing_3d = '''
+       *******   *******  ******** *******   *******  
+      **/////** /**////**/**///// /**////** /**////** 
+     **     //**/**   /**/**      /**   /** /**   /** 
+    /**      /**/******* /******* /*******  /*******  
+    /**      /**/**////  /**////  /**///**  /**///**  
+    //**     ** /**      /**      /**  //** /**  //** 
+     //*******  /**      /********/**   //**/**   //**
+      ///////   //       //////// //     // //     // 
+     ******   ** **       **       ** ****     **   ******** 
+    /*////** /**/**      /**      /**/**/**   /**  **//////**
+    /*   /** /**/**      /**      /**/**//**  /** **      // 
+    /******  /**/**      /**      /**/** //** /**/**         
+    /*//// **/**/**      /**      /**/**  //**/**/**    *****
+    /*    /**/**/**      /**      /**/**   //****//**  ////**
+    /******* /**/********/********/**/**    //*** //******** 
+    ///////  // //////// //////// // //      ///   //////// 
+    '''
+    operr_billing_gothic = '''
+        __                                         
+      ,-||-,   -__ /\\    ,- _~, -__ /\   -__ /\   
+     ('|||  )    ||  \\  (' /| /   || \,    || \,  
+    (( |||--))  /||__|| ((  ||/=  /|| /    /|| /   
+    (( |||--))  \||__|| ((  ||    \||/-    \||/-   
+     ( / |  )    ||  |,  ( / |     ||  \    ||  \  
+      -____-   _-||-_/    -____- _---_-|, _---_-|, 
+                 ||                                
+                                                   
+                                            __       __ ,  
+    _-_ _,,   _-_, _-_-    _-_-    _-_,    /  -,   ,-| ~   
+       -/  )    //  /,      /,       //   ||   )  ('||/__, 
+      ~||_<     ||  ||      ||       ||  ~||---) (( |||  | 
+       || \\   ~|| ~||     ~||      ~||  ~||---, (( |||==| 
+       ,/--||   ||  ||      ||       ||  ~||  /   ( / |  , 
+      _--_-'  _-_, (  -__, (  -__, _-_,   |, /     -____/  
+     (                                  -_-  --~           
+                                                   '''
 
-    fig_list = [chineseDragon, doge, alpaca, dragon]
+    fig_list = [operr, operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d,
+                chineseDragon, doge, alpaca, dragon, operr]
     fig_list = np.random.permutation(fig_list)
     print(fig_list[0])
 
@@ -5981,7 +6017,6 @@ if __name__ == '__main__':
         SQ.cursor.close()
         SQ.conn.close()
         sys.exit(app.exec_())
-
     run()
 
 
