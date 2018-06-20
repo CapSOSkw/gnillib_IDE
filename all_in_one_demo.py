@@ -24,6 +24,7 @@ from sqlalchemy import create_engine
 from pprint import pprint
 from shapely.geometry import Point, Polygon
 import arrow
+from ast import literal_eval
 
 
 class info_locker():
@@ -382,8 +383,8 @@ class EDI276():
 
 class EDI837P():
 
-    def __init__(self, file, delayed_claim=False):
-        self.delayed_claim = delayed_claim
+    def __init__(self, file, replace=False):
+        self.replace = replace
         self.df = pd.read_csv(file, dtype=object) if file[-1] == 'v' else pd.read_excel(file, dtype=object)
         # self.df = self.df.fillna("")
 
@@ -409,6 +410,10 @@ class EDI837P():
         self.all_invoice_number = []
         self.invoice_ST_SE_dict = {}
         self.file_name = '837-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0]  if re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(datetime.today().date())
+
+
+        self.today_datetime = arrow.now().datetime
+        self.delayDate_line = arrow.now().shift(days=-90).datetime
 
     def ISA(self, prod=True):
         if prod==False:
@@ -504,16 +509,22 @@ class EDI837P():
 
         return '*'.join(NM1) + "~" + '*'.join(N3) + "~" + '*'.join(N4) + "~" + '*'.join(REF1) + "~" + '*'.join(REF2) + "~"
 
-    def loop2300(self, invoice_number, amount, pa_num): #claim info
+    def loop2300(self, invoice_number, amount, pa_num, delay_claim=False): #claim info
         if amount == "":
             amount = "0"
         if pa_num == "":
             pa_num = 0
 
-        if self.delayed_claim == True:
-            CLM = ["CLM", str(invoice_number), str(amount), "", "", "99:B:1", "Y", "A", "Y", "Y", "P", "","","","","","","","","","11"]
+        if self.replace == False:
+            replace_code = '99:B:1'
         else:
-            CLM = ["CLM", str(invoice_number), str(amount), "", "", "99:B:1", "Y", "A", "Y", "Y", "P"]
+            replace_code = '99:B:7'
+
+        if delay_claim == True:
+            CLM = ["CLM", str(invoice_number), str(amount), "", "", replace_code, "Y", "A", "Y", "Y", "P", "","","","","","","","","","11"]
+        else:
+            CLM = ["CLM", str(invoice_number), str(amount), "", "", replace_code, "Y", "A", "Y", "Y", "P"]
+
         REF = ['REF', "G1", str('{:>011d}'.format(int(pa_num)))]
         HI = ["HI", "ABK:R69"]
 
@@ -747,6 +758,15 @@ class EDI837P():
             self.lx_lines = 0
             df_row = self.df.ix[[row]]   # get row data
 
+            service_date = df_row['service date'].values[0]
+            print(service_date)
+            arrow_serviceDate = arrow.get(service_date, 'YYYYMMDD').datetime
+            if arrow_serviceDate <= self.delayDate_line:
+                delayClaim_switch = True
+            else:
+                delayClaim_switch = False
+
+
             ST = self.transaction_header(iterations=row+1, invoice_number= df_row['invoice number'].values[0])
             loop1000a = self.loop1000a()
             loop1000b = self.loop1000b()
@@ -757,7 +777,7 @@ class EDI837P():
                                          address=df_row['patient address'].values[0], city=df_row['patient city'].values[0], state=df_row['patient state'].values[0],
                                          zipcode=df_row['patient zip code'].values[0], dob=df_row['patient dob'].values[0], gender=df_row['patient gender'].values[0])
             loop2010bb = self.loop2010bb()
-            loop2300 = self.loop2300(invoice_number=df_row['invoice number'].values[0], amount=df_row['claim_amount'].values[0], pa_num=df_row['pa number'].values[0])
+            loop2300 = self.loop2300(invoice_number=df_row['invoice number'].values[0], amount=df_row['claim_amount'].values[0], pa_num=df_row['pa number'].values[0], delay_claim=delayClaim_switch)
             loop2310a = self.loop2310a(driver_first=df_row['driver first name'].values[0], driver_last=df_row['driver last name'].values[0],
                                        driver_lic=df_row['driver license number'].values[0], service_name=df_row['service facility name'].values[0],
                                        service_NPI=df_row['service npi'].values[0])
@@ -1174,7 +1194,10 @@ class SignoffAndCompare():
         sign_off_df['LEG ID'] = mas_2_df['Leg ID'].astype(int)
         sign_off_df['TOLL FEE'] = sign_off_df['INVOICE ID'].apply(lambda x: get_tollfee(x))
         sign_off_df['PROCEDURE CODE'] = mas_2_df['merge_codes']
+
+        mas_2_df['Leg Mileage'] = mas_2_df['Leg Mileage'].apply(lambda x: math.ceil(float(x)))
         sign_off_df['TRIP MILEAGE'] = mas_2_df['Leg Mileage']
+
         sign_off_df['PICK UP ADDRESS'] = mas_2_df['Pick-up Address']
         sign_off_df['PICK UP CITY'] = mas_2_df['Pick-up City']
         sign_off_df['PICK UP ZIPCODE'] = mas_2_df['Pick-up Zip'].astype(int)
@@ -1272,7 +1295,7 @@ class SignoffAndCompare():
         sign_off_df['CIN'] = mas_2_df['CIN']
         sign_off_df['NPI'] = mas_2_df['Ordering Provider ID']   # 0429 added
 
-        sign_off_df = pd.concat([sign_off_df, missed_trip_concat_to_signoff_df], 0)
+        sign_off_df = pd.concat([sign_off_df, missed_trip_concat_to_signoff_df], 0, sort=False)
         sign_off_df = sign_off_df[['SERVICE DAY', 'INVOICE ID', 'LEG ID', 'TOLL FEE', 'PROCEDURE CODE',
                                    'TRIP MILEAGE', 'PICK UP ADDRESS', 'PICK UP CITY', 'PICK UP ZIPCODE',
                                    'DROP OFF ADDRESS', 'DROP OFF CITY', 'DROP OFF ZIPCODE', 'PICK UP TIME',
@@ -1866,58 +1889,58 @@ class SignoffAndCompare():
 
 
             # Second 837P
-            df_2nd_837 = df_for_837
-            df_2nd_837 = df_2nd_837.fillna("")
-
-            for r in range(len(df_2nd_837)):
-                row_data = df_2nd_837.ix[r, :]
-
-                # calculate number of legs
-                count_legs = int(row_data['unit 1'])
-
-                if (row_data['service code 2'] == 'A0100') and (row_data['modifier code 2'] == 'TN'):
-                    count_legs += int(row_data['unit 2'])
-
-                if (row_data['service code 2'] == 'S0215'):
-                    if row_data['modifier code 2'] == 'TN':
-                        old_amount2 = row_data['amount 2']
-
-                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
-                        df_2nd_837.ix[r, 'amount 2'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
-                        delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
-                        delta_amount2 = float(format(delta_amount2, '.2f'))
-                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
-
-                    else:
-                        old_amount2 = row_data['amount 2']
-
-                        df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
-                        df_2nd_837.ix[r, 'amount 2'] = math.floor(
-                            float(format(3.21 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
-                        delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
-                        delta_amount2 = float(format(delta_amount2, '.2f'))
-                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
-
-                if (row_data['service code 3'] == 'S0215'):
-                    if row_data['modifier code 3'] == 'TN':
-                        old_amount3 = row_data['amount 3']
-
-                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
-                        df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
-                        delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
-                        delta_amount3 = float(format(delta_amount3, '.2f'))
-                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
-
-                    else:
-                        old_amount3 = row_data['amount 3']
-
-                        df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
-                        df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(3.21 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
-                        delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
-                        delta_amount3 = float(format(delta_amount3, '.2f'))
-                        df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
-
-            df_2nd_837.to_excel(os.path.join(file_saving_path, '837P-2 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
+            # df_2nd_837 = df_for_837
+            # df_2nd_837 = df_2nd_837.fillna("")
+            #
+            # for r in range(len(df_2nd_837)):
+            #     row_data = df_2nd_837.ix[r, :]
+            #
+            #     # calculate number of legs
+            #     count_legs = int(row_data['unit 1'])
+            #
+            #     if (row_data['service code 2'] == 'A0100') and (row_data['modifier code 2'] == 'TN'):
+            #         count_legs += int(row_data['unit 2'])
+            #
+            #     if (row_data['service code 2'] == 'S0215'):
+            #         if row_data['modifier code 2'] == 'TN':
+            #             old_amount2 = row_data['amount 2']
+            #
+            #             df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
+            #             df_2nd_837.ix[r, 'amount 2'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
+            #             delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
+            #             delta_amount2 = float(format(delta_amount2, '.2f'))
+            #             df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
+            #
+            #         else:
+            #             old_amount2 = row_data['amount 2']
+            #
+            #             df_2nd_837.ix[r, 'unit 2'] = math.ceil(row_data['unit 2'])
+            #             df_2nd_837.ix[r, 'amount 2'] = math.floor(
+            #                 float(format(3.21 * df_2nd_837.ix[r, 'unit 2'] * 100, '.2f'))) / 100.0
+            #             delta_amount2 = df_2nd_837.ix[r, 'amount 2'] - old_amount2
+            #             delta_amount2 = float(format(delta_amount2, '.2f'))
+            #             df_2nd_837.ix[r, 'claim_amount'] += delta_amount2
+            #
+            #     if (row_data['service code 3'] == 'S0215'):
+            #         if row_data['modifier code 3'] == 'TN':
+            #             old_amount3 = row_data['amount 3']
+            #
+            #             df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
+            #             df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(2.25 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
+            #             delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
+            #             delta_amount3 = float(format(delta_amount3, '.2f'))
+            #             df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
+            #
+            #         else:
+            #             old_amount3 = row_data['amount 3']
+            #
+            #             df_2nd_837.ix[r, 'unit 3'] = math.ceil(row_data['unit 3'])
+            #             df_2nd_837.ix[r, 'amount 3'] = math.floor(float(format(3.21 * df_2nd_837.ix[r, 'unit 3'] * 100, '.2f'))) / 100.0
+            #             delta_amount3 = df_2nd_837.ix[r, 'amount 3'] - old_amount3
+            #             delta_amount3 = float(format(delta_amount3, '.2f'))
+            #             df_2nd_837.ix[r, 'claim_amount'] += delta_amount3
+            #
+            # df_2nd_837.to_excel(os.path.join(file_saving_path, '837P-2 Data-for-{0}-to-{1}.xlsx'.format(self.min_service_date, self.max_service_date)), index=False)
 
 
             current_path = os.getcwd()
@@ -1932,7 +1955,7 @@ class SignoffAndCompare():
 
         return result_df
 
-    def new_compare_after_payment(self, signoff_compare_PA_file, payment_raw_file):
+    def new_compare_after_payment(self, signoff_compare_PA_file, payment_raw_file, edi_837P_file=None):
 
         new_compare_filename = re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', signoff_compare_PA_file)[0]
         new_compare_filename = "Check Payment-" + new_compare_filename + '.xlsx'
@@ -1991,6 +2014,7 @@ class SignoffAndCompare():
         # signoff_compare_PA_df['CIN'] = ""
         signoff_compare_PA_df['signoff payment compare'] = ""
         signoff_compare_PA_df['payment result'] = ""
+        signoff_compare_PA_df['payment toll fee amount'] = 0
 
         unique_invoice_number_payment = payment_df['invoice number'].unique().tolist()
 
@@ -2008,6 +2032,7 @@ class SignoffAndCompare():
 
                 temp_encode_payment = [0 for _ in range(5)]
                 temp_paid_amount = []
+                temp_payment_tollfee = 0
 
                 for i in idx_payment:
                     temp_paid_amount.append(payment_df.ix[i, 'paid amount'])
@@ -2026,29 +2051,27 @@ class SignoffAndCompare():
                             temp_encode_payment[3] = unit
                         elif code == 'A0100SC':
                             temp_encode_payment[4] = int(unit)
+                        elif code == 'A0170CG':
+                            temp_payment_tollfee = payment_df.ix[i, 'paid amount']
                         else:
                             pass
 
+                signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment toll fee amount'] = float(temp_payment_tollfee)
                 signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment'] = str((temp_encode_payment))
-                signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'] = round(sum(temp_paid_amount), 2)
-                # signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'] = math.floor(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'] * 100) / 100.0
+                signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'] = round(sum(temp_paid_amount), 2) - float(temp_payment_tollfee)
 
-                # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment'])
+
                 if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode_signoff'] != signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'encode payment']:
                     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'signoff payment compare'] = 'DIFFERENT'
                 else:
                     pass
 
-                # print(signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'], signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount'])
+
                 if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'sign-off Total Amount'] <= signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment paid amount']:
                     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'OKAY'
                 else:
                     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'DIFFERENT'
 
-                # if signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'service date'] == "":
-                #     signoff_compare_PA_df.ix[idx_signoff_compare_PA[0], 'payment result'] = 'Not Found'
-                # else:
-                #     pass
 
         signoff_compare_PA_df = signoff_compare_PA_df.fillna("")
 
@@ -2060,6 +2083,7 @@ class SignoffAndCompare():
 
             if maybeReplacedInvoice.__len__() == 0:
                 signoff_compare_PA_df.ix[i, 'payment result'] = 'Not Found'
+                signoff_compare_PA_df.ix[i, 'payment tollfee result'] = 'Not Found'
 
             else:
                 # print(maybeReplacedInvoice[0])
@@ -2072,10 +2096,42 @@ class SignoffAndCompare():
                 signoff_compare_PA_df.ix[i, 'payer claim control number'] = replacedReceiptNumber
                 signoff_compare_PA_df.ix[i, 'payment paid amount'] = replacedTotalPaidAmount
 
+        signoff_compare_PA_df['payment tollfee result'] = np.where(
+            signoff_compare_PA_df['sign-off toll fee'] == signoff_compare_PA_df['payment toll fee amount'], 'OKAY',
+            'DIFFERENT')
+
+        for l in range(signoff_compare_PA_df.__len__()):
+            row = signoff_compare_PA_df.ix[l, :]
+
+            try:
+                reclaim_replace = [round(literal_eval(row['encode_pa'])[i] - literal_eval(row['encode payment'])[i], 2) for i in range(5)]
+            except:
+                reclaim_replace = literal_eval(row['encode_pa'])
+
+            signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(reclaim_replace)
+
+            reclaim_replace_gt_0 = [idx for idx, v in enumerate(reclaim_replace) if v > 0]
+
+            if row['encode payment'] == "":
+                signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
+
+            elif all(i == 0 for i in reclaim_replace) and row['sign-off toll fee'] == row['payment toll fee amount']:
+                signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Passed'
+
+            elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) and (row['sign-off toll fee'] - row['payment toll fee amount'] == row['sign-off toll fee'] or row['sign-off toll fee'] == row['payment toll fee amount']):
+                signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
+
+            else:
+                signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Replace'
+
+
+
+
+        signoff_compare_PA_df['payment result'] = np.where(signoff_compare_PA_df['sign-off amount no toll fee'] == signoff_compare_PA_df['payment paid amount'], 'OKAY', 'DIFFERENT')
 
         ordered_columns = ['service_date', 'invoice number', 'pa_number', 'encode_pa', 'encode_signoff', 'compare_result', 'encode payment',
-                                         'signoff payment compare', 'sign-off amount no toll fee', 'sign-off toll fee', 'sign-off Total Amount', 'payment paid amount',
-                                         'payment result', 'payer claim control number', 'CIN', 'DRIVER ID', 'VEHICLE ID', 'Service NPI']
+                            'reclaim_replace', 'reclaim_replace_result', 'sign-off toll fee', 'payment toll fee amount', 'payment tollfee result', 'sign-off amount no toll fee',
+                            'payment paid amount', 'payment result', 'payer claim control number', 'CIN', 'DRIVER ID', 'VEHICLE ID', 'Service NPI']
         signoff_compare_PA_df = signoff_compare_PA_df[ordered_columns]
 
         current_path = os.getcwd()
@@ -2087,6 +2143,11 @@ class SignoffAndCompare():
             print('Save files to {0}'.format(file_saving_path))
 
         signoff_compare_PA_df.to_excel(os.path.join(file_saving_path, new_compare_filename), index=False)
+
+        # For reclaim and replacement trips
+        # 1. Reclaim
+        # cache_837P_df = pd.read_excel(edi_837P_file)
+        # cache_837P_df['payer control number'] = signoff_compare_PA_df['payer claim control number']
 
 
 class Process_Method():
@@ -3338,8 +3399,8 @@ class subwindow_837(QMainWindow):
             btnSelect1.clicked.connect(self.select_file1)
             btnRun1 = QPushButton('Run')
             btnRun1.clicked.connect(self.generate_837)
-            self.checkbox = QCheckBox('Delayed Claims (>90 Days)', self)
-            self.checkbox.stateChanged.connect(self.switchToDelayClaim)
+            # self.checkbox = QCheckBox('Delayed Claims (>90 Days)', self)
+            # self.checkbox.stateChanged.connect(self.switchToDelayClaim)
             # btnQuit1 = QPushButton('Quit')
             # btnQuit1.clicked.connect(self.close_application)
 
@@ -3348,7 +3409,7 @@ class subwindow_837(QMainWindow):
             self.tab1.layout.addWidget(btnSelect1, 0, 2)
             self.tab1.layout.addWidget(btnRun1, 0, 3)
             # self.tab1.layout.addWidget(btnQuit1, 3, 0)
-            self.tab1.layout.addWidget(self.checkbox, 3, 0)
+            # self.tab1.layout.addWidget(self.checkbox, 3, 0)
             self.tab1.setLayout(self.tab1.layout)
 
         def select_file1(self):
@@ -3380,17 +3441,17 @@ class subwindow_837(QMainWindow):
 
                     else:
                         P = Process_Method()
-                        P.generate_837(self.file_name1, self.delay_switch)
+                        P.generate_837(self.file_name1)
 
                         QMessageBox.about(self, 'Message', 'File generated successfully!')
             else:
                 pass
 
-        def switchToDelayClaim(self, state):
-            if state == Qt.Checked:
-                self.delay_switch = True
-            else:
-                self.delay_switch = False
+        # def switchToDelayClaim(self, state):
+        #     if state == Qt.Checked:
+        #         self.delay_switch = True
+        #     else:
+        #         self.delay_switch = False
 
     def __init__(self):
         super(subwindow_837, self).__init__()
@@ -5998,11 +6059,50 @@ if __name__ == '__main__':
       _--_-'  _-_, (  -__, (  -__, _-_,   |, /     -____/  
      (                                  -_-  --~           
                                                    '''
+    operr_billing_coinstk = '''
+        O))))     O)))))))  O))))))))O)))))))    O)))))))    
+      O))    O))  O))    O))O))      O))    O))  O))    O))  
+    O))        O))O))    O))O))      O))    O))  O))    O))  
+    O))        O))O)))))))  O))))))  O) O))      O) O))      
+    O))        O))O))       O))      O))  O))    O))  O))    
+      O))     O)) O))       O))      O))    O))  O))    O))  
+        O))))     O))       O))))))))O))      O))O))      O))
+                                                             
+    O)) O))   O))O))      O))      O))O)))     O))   O))))   
+    O)    O)) O))O))      O))      O))O) O))   O)) O)    O)) 
+    O)     O))O))O))      O))      O))O)) O))  O))O))        
+    O))) O)   O))O))      O))      O))O))  O)) O))O))        
+    O)     O))O))O))      O))      O))O))   O) O))O))   O))))
+    O)      O)O))O))      O))      O))O))    O) )) O))    O) 
+    O)))) O)) O))O))))))))O))))))))O))O))      O))  O))))) 
+    '''
+    operr_billing_dom = '''
+     ___________ _________________  ______ _____ _      _     _____ _   _ _____ 
+    |  _  | ___ \  ___| ___ \ ___ \ | ___ \_   _| |    | |   |_   _| \ | |  __ \
+    | | | | |_/ / |__ | |_/ / |_/ / | |_/ / | | | |    | |     | | |  \| | |  \/
+    | | | |  __/|  __||    /|    /  | ___ \ | | | |    | |     | | | . ` | | __ 
+    \ \_/ / |   | |___| |\ \| |\ \  | |_/ /_| |_| |____| |_____| |_| |\  | |_\ \
+     \___/\_|   \____/\_| \_\_| \_| \____/ \___/\_____/\_____/\___/\_| \_/\____/
+    '''
+    operr_billing_gra = '''
+    ________ _________________________________________ 
+    \_____  \______   \_   _____/\______   \______    \
+     /   |   \|     ___/|    __)_  |       _/|       _/
+    /    |    \    |    |        \ |    |   \|    |   \
+    \_______  /____|   /_______  / |____|_  /|____|_  /
+            \/                 \/         \/        \/ 
+    __________.___.____    .____    .___ _______    ________ 
+    \______   \   |    |   |    |   |   |\      \  /  _____/ 
+     |    |  _/   |    |   |    |   |   |/   |   \/   \  ___ 
+     |    |   \   |    |___|    |___|   /    |    \    \_\  \
+     |______  /___|_______ \_______ \___\____|__  /\______  /
+            \/            \/       \/           \/        \/ 
+    '''
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d,
                 chineseDragon, doge, alpaca, dragon]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.6.18"
+    _version = "0.6.20"
 
     print(fig_list[0])
     print('\n')
@@ -6017,7 +6117,10 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     run()
 
-
+    # s = SignoffAndCompare()
+    # s.new_compare_after_payment('./CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/MAS Correction-2017-11-01-to-2017-11-30.xlsx', './TestData/NEW_PAYMENT NOV.2017 FOR CHECK.xlsx',
+    #                             './CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/837P-1 Data-for-2017-11-01-to-2017-11-30.xlsx')
+    #
 
 
 
