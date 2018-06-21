@@ -25,6 +25,7 @@ from pprint import pprint
 from shapely.geometry import Point, Polygon
 import arrow
 from ast import literal_eval
+pd.options.mode.chained_assignment = None
 
 
 class info_locker():
@@ -509,7 +510,7 @@ class EDI837P():
 
         return '*'.join(NM1) + "~" + '*'.join(N3) + "~" + '*'.join(N4) + "~" + '*'.join(REF1) + "~" + '*'.join(REF2) + "~"
 
-    def loop2300(self, invoice_number, amount, pa_num, delay_claim=False): #claim info
+    def loop2300(self, invoice_number, amount, pa_num, delay_claim=False, payer_control_num=None): #claim info
         if amount == "":
             amount = "0"
         if pa_num == "":
@@ -525,10 +526,15 @@ class EDI837P():
         else:
             CLM = ["CLM", str(invoice_number), str(amount), "", "", replace_code, "Y", "A", "Y", "Y", "P"]
 
+
         REF = ['REF', "G1", str('{:>011d}'.format(int(pa_num)))]
         HI = ["HI", "ABK:R69"]
 
-        return '*'.join(CLM) + "~" + '*'.join(REF) + "~" + '*'.join(HI) + "~"
+        if self.replace == False:
+            return '*'.join(CLM) + "~" + '*'.join(REF) + "~" + '*'.join(HI) + "~"
+        else:
+            REF_replace = ['REF', 'F8', str(payer_control_num)]
+            return '*'.join(CLM) + "~" + '*'.join(REF_replace) + '~' + '*'.join(REF) + "~" + '*'.join(HI) + "~"
 
     def loop2310a(self, driver_first, driver_last, driver_lic, service_name, service_NPI): #referring provider
         if driver_first == "":
@@ -759,13 +765,10 @@ class EDI837P():
             df_row = self.df.ix[[row]]   # get row data
 
             service_date = df_row['service date'].values[0]
-            print(service_date)
             arrow_serviceDate = arrow.get(service_date, 'YYYYMMDD').datetime
-            if arrow_serviceDate <= self.delayDate_line:
-                delayClaim_switch = True
-            else:
-                delayClaim_switch = False
 
+            delayClaim_switch = True if arrow_serviceDate <= self.delayDate_line else False
+            payerControlNum = df_row['payer control number'].values[0] if delayClaim_switch == True else None
 
             ST = self.transaction_header(iterations=row+1, invoice_number= df_row['invoice number'].values[0])
             loop1000a = self.loop1000a()
@@ -777,7 +780,7 @@ class EDI837P():
                                          address=df_row['patient address'].values[0], city=df_row['patient city'].values[0], state=df_row['patient state'].values[0],
                                          zipcode=df_row['patient zip code'].values[0], dob=df_row['patient dob'].values[0], gender=df_row['patient gender'].values[0])
             loop2010bb = self.loop2010bb()
-            loop2300 = self.loop2300(invoice_number=df_row['invoice number'].values[0], amount=df_row['claim_amount'].values[0], pa_num=df_row['pa number'].values[0], delay_claim=delayClaim_switch)
+            loop2300 = self.loop2300(invoice_number=df_row['invoice number'].values[0], amount=df_row['claim_amount'].values[0], pa_num=df_row['pa number'].values[0], delay_claim=delayClaim_switch, payer_control_num=payerControlNum)
             loop2310a = self.loop2310a(driver_first=df_row['driver first name'].values[0], driver_last=df_row['driver last name'].values[0],
                                        driver_lic=df_row['driver license number'].values[0], service_name=df_row['service facility name'].values[0],
                                        service_NPI=df_row['service npi'].values[0])
@@ -1957,8 +1960,8 @@ class SignoffAndCompare():
 
     def new_compare_after_payment(self, signoff_compare_PA_file, payment_raw_file, edi_837P_file=None):
 
-        new_compare_filename = re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', signoff_compare_PA_file)[0]
-        new_compare_filename = "Check Payment-" + new_compare_filename + '.xlsx'
+        new_compare_filename0 = re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', signoff_compare_PA_file)[0]
+        new_compare_filename = "Check Payment-" + new_compare_filename0 + '.xlsx'
 
         def split_CIN_receipt(x):
             # print(x)
@@ -2108,14 +2111,20 @@ class SignoffAndCompare():
             except:
                 reclaim_replace = literal_eval(row['encode_pa'])
 
-            signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(reclaim_replace)
+            # signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(reclaim_replace)
 
             reclaim_replace_gt_0 = [idx for idx, v in enumerate(reclaim_replace) if v > 0]
+
+            real_reclaim_replace = reclaim_replace
+            for i in reclaim_replace_gt_0:
+                real_reclaim_replace[i] = literal_eval(row['encode_signoff'])[i]
+
+            signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(real_reclaim_replace)
 
             if row['encode payment'] == "":
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
 
-            elif all(i == 0 for i in reclaim_replace) and row['sign-off toll fee'] == row['payment toll fee amount']:
+            elif all(i <= 0 for i in reclaim_replace) and row['sign-off toll fee'] <= row['payment toll fee amount']:
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Passed'
 
             elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) and (row['sign-off toll fee'] - row['payment toll fee amount'] == row['sign-off toll fee'] or row['sign-off toll fee'] == row['payment toll fee amount']):
@@ -2123,8 +2132,6 @@ class SignoffAndCompare():
 
             else:
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Replace'
-
-
 
 
         signoff_compare_PA_df['payment result'] = np.where(signoff_compare_PA_df['sign-off amount no toll fee'] == signoff_compare_PA_df['payment paid amount'], 'OKAY', 'DIFFERENT')
@@ -2144,10 +2151,144 @@ class SignoffAndCompare():
 
         signoff_compare_PA_df.to_excel(os.path.join(file_saving_path, new_compare_filename), index=False)
 
+
         # For reclaim and replacement trips
-        # 1. Reclaim
-        # cache_837P_df = pd.read_excel(edi_837P_file)
-        # cache_837P_df['payer control number'] = signoff_compare_PA_df['payer claim control number']
+        if edi_837P_file != None:
+            cache_837P_df = pd.read_excel(edi_837P_file)
+            cache_837P_df['payer control number'] = signoff_compare_PA_df['payer claim control number']
+            #
+            # # 1. Replace
+            replace_df = signoff_compare_PA_df.loc[signoff_compare_PA_df['reclaim_replace_result'] == 'Replace']
+            replace_837_df = cache_837P_df[cache_837P_df['invoice number'].isin(replace_df['invoice number'])]
+
+            replace_837_df.to_excel(os.path.join(file_saving_path, 'Replace_837P_' + new_compare_filename0 + '.xlsx'), index=False)
+
+            ###################################################################################################
+
+            # 2. Reclaim
+            # Reset code , code modifier, code amount, code unit
+            reclaim_df = signoff_compare_PA_df.loc[signoff_compare_PA_df['reclaim_replace_result'] == 'Reclaim']
+            reclaim_837_df = cache_837P_df[cache_837P_df['invoice number'].isin(reclaim_df['invoice number'])]
+
+            reclaim_837_df['service code 1'] = ''
+            reclaim_837_df['modifier code 1'] = ''
+            reclaim_837_df['amount 1'] = ''
+            reclaim_837_df['unit 1'] = ''
+
+            reclaim_837_df['service code 2'] = ''
+            reclaim_837_df['modifier code 2'] = ''
+            reclaim_837_df['amount 2'] = ''
+            reclaim_837_df['unit 2'] = ''
+
+            reclaim_837_df['service code 3'] = ''
+            reclaim_837_df['modifier code 3'] = ''
+            reclaim_837_df['amount 3'] = ''
+            reclaim_837_df['unit 3'] = ''
+
+            reclaim_837_df['service code 4'] = ''
+            reclaim_837_df['modifier code 4'] = ''
+            reclaim_837_df['amount 4'] = ''
+            reclaim_837_df['unit 4'] = ''
+
+            reclaim_837_df['service code 5'] = ''
+            reclaim_837_df['modifier code 5'] = ''
+            reclaim_837_df['amount 5'] = ''
+            reclaim_837_df['unit 5'] = ''
+
+            reclaim_837_df['service code 6'] = ''
+            reclaim_837_df['modifier code 6'] = ''
+            reclaim_837_df['amount 6'] = ''
+            reclaim_837_df['unit 6'] = ''
+
+            reclaim_837_df['claim_amount'] = 0
+
+            ####################################################################################
+            trips_to_reclaim = reclaim_df['invoice number'].tolist()
+            for i in trips_to_reclaim:
+                idx_reclaim_df = reclaim_df.loc[reclaim_df['invoice number'] == i].index.tolist()
+                idx_reclaim_837_df = reclaim_837_df.loc[reclaim_837_df['invoice number'] == i].index.tolist()
+
+                reclaim_code = literal_eval(reclaim_df.ix[idx_reclaim_df[0], 'reclaim_replace'])
+
+                signoff_tollfee = reclaim_df.ix[idx_reclaim_df[0], 'sign-off toll fee']
+                payment_tollfee = reclaim_df.ix[idx_reclaim_df[0], 'payment toll fee amount']
+
+                if signoff_tollfee > payment_tollfee:
+                    reclaim_tollfee = True
+                else:
+                    reclaim_tollfee = False
+
+                count = 1
+                reclaim_amount = 0
+                for idx_code, c in enumerate(reclaim_code):
+                    if c == 0:
+                        continue
+                    else:
+                        if idx_code == 0:
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0100'
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = ""
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(float(format(c * 25.95 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
+                            reclaim_amount += math.floor(float(format(c * 25.95 * 100, '.2f'))) / 100.0
+
+                        elif idx_code == 1:
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0100'
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = "TN"
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(
+                                float(format(c * 35 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
+
+                            reclaim_amount += math.floor(
+                                float(format(c * 35 * 100, '.2f'))) / 100.0
+
+                        elif idx_code == 2:
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'S0215'
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = ""
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(
+                                float(format(c * 3.21 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
+
+                            reclaim_amount += math.floor(
+                                float(format(c * 3.21 * 100, '.2f'))) / 100.0
+
+                        elif idx_code == 3:
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'S0215'
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = "TN"
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(
+                                float(format(c * 2.25 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
+
+                            reclaim_amount += math.floor(
+                                float(format(c * 2.25 * 100, '.2f'))) / 100.0
+
+                        elif idx_code == 4:
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0100'
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = "SC"
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(
+                                float(format(c * 25 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
+
+                            reclaim_amount += math.floor(
+                                float(format(c * 25 * 100, '.2f'))) / 100.0
+
+                        else:
+                            pass
+
+                        count += 1
+
+                if reclaim_tollfee:
+                    reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0170'
+                    reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = "CG"
+                    reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = signoff_tollfee
+                    reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = 1
+
+                    reclaim_amount += signoff_tollfee
+                else:
+                    pass
+
+                reclaim_837_df.ix[idx_reclaim_837_df[0], 'claim_amount'] = reclaim_amount
+
+            reclaim_837_df.to_excel(os.path.join(file_saving_path, 'Reclaim_837P_' + new_compare_filename0 + '.xlsx'), index=False)
 
 
 class Process_Method():
@@ -3115,8 +3256,8 @@ class Process_Method():
         return
 
     @staticmethod
-    def generate_837(data, delay_claim):
-        edi = EDI837P(data, delay_claim)
+    def generate_837(data, replace_switch):
+        edi = EDI837P(data, replace_switch)
         stream_837data = edi.ISA_IEA()
         filename = edi.file_name + '.txt'
 
@@ -3385,7 +3526,7 @@ class subwindow_837(QMainWindow):
 
             self.tabs.addTab(self.tab1, '-*Claim*-')
 
-            self.delay_switch = False
+            self.replace_switch = False
             self.mytab1()
 
             self.layout.addWidget(self.tabs)
@@ -3399,8 +3540,8 @@ class subwindow_837(QMainWindow):
             btnSelect1.clicked.connect(self.select_file1)
             btnRun1 = QPushButton('Run')
             btnRun1.clicked.connect(self.generate_837)
-            # self.checkbox = QCheckBox('Delayed Claims (>90 Days)', self)
-            # self.checkbox.stateChanged.connect(self.switchToDelayClaim)
+            self.checkbox = QCheckBox('Replace Claims', self)
+            self.checkbox.stateChanged.connect(self.switchToReplace)
             # btnQuit1 = QPushButton('Quit')
             # btnQuit1.clicked.connect(self.close_application)
 
@@ -3409,7 +3550,7 @@ class subwindow_837(QMainWindow):
             self.tab1.layout.addWidget(btnSelect1, 0, 2)
             self.tab1.layout.addWidget(btnRun1, 0, 3)
             # self.tab1.layout.addWidget(btnQuit1, 3, 0)
-            # self.tab1.layout.addWidget(self.checkbox, 3, 0)
+            self.tab1.layout.addWidget(self.checkbox, 3, 0)
             self.tab1.setLayout(self.tab1.layout)
 
         def select_file1(self):
@@ -3441,17 +3582,17 @@ class subwindow_837(QMainWindow):
 
                     else:
                         P = Process_Method()
-                        P.generate_837(self.file_name1)
+                        P.generate_837(self.file_name1, self.replace_switch)
 
                         QMessageBox.about(self, 'Message', 'File generated successfully!')
             else:
                 pass
 
-        # def switchToDelayClaim(self, state):
-        #     if state == Qt.Checked:
-        #         self.delay_switch = True
-        #     else:
-        #         self.delay_switch = False
+        def switchToReplace(self, state):
+            if state == Qt.Checked:
+                self.replace_switch = True
+            else:
+                self.replace_switch = False
 
     def __init__(self):
         super(subwindow_837, self).__init__()
@@ -4074,6 +4215,7 @@ class subwindow_MAS(QMainWindow):
             self.ifcollect270 = False
             self.only270 = False
             self.file_name1 = None
+            self.filenameTab4_3 = None
 
             self.mytab2()
             self.mytab3()
@@ -4170,6 +4312,13 @@ class subwindow_MAS(QMainWindow):
             self.textboxTab4_2 = QLineEdit()
             btnSelectTab4_2 = QPushButton('...')
             btnSelectTab4_2.clicked.connect(self.select_fileTab4_2)
+
+            nameLabelTab4_3 = QLabel('Claims Data: \n(Optional)')
+            self.textboxTab4_3 = QLineEdit()
+            btnSelectTab4_3 = QPushButton('...')
+            btnSelectTab4_3.clicked.connect(self.select_fileTab4_3)
+
+
             btnRunTab4 = QPushButton('Run')
             btnRunTab4.clicked.connect(self.compare_after_payment)
             btnQuitTab4 = QPushButton('Quit')
@@ -4181,6 +4330,9 @@ class subwindow_MAS(QMainWindow):
             self.tab4.layout.addWidget(nameLabelTab4_2, 1, 0)
             self.tab4.layout.addWidget(self.textboxTab4_2, 1, 1)
             self.tab4.layout.addWidget(btnSelectTab4_2, 1, 2)
+            self.tab4.layout.addWidget(nameLabelTab4_3, 2, 0)
+            self.tab4.layout.addWidget(self.textboxTab4_3, 2, 1)
+            self.tab4.layout.addWidget(btnSelectTab4_3, 2, 2)
             self.tab4.layout.addWidget(btnRunTab4, 3, 2)
             # self.tab4.layout.addWidget(btnQuitTab4, 4, 0)
             self.tab4.setLayout(self.tab4.layout)
@@ -4320,6 +4472,11 @@ class subwindow_MAS(QMainWindow):
                                                                  options=QFileDialog.DontUseNativeDialog)
             self.textboxTab4_2.setText(self.filenameTab4_2)
 
+        def select_fileTab4_3(self):
+            self.filenameTab4_3, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                                 options=QFileDialog.DontUseNativeDialog)
+            self.textboxTab4_3.setText(self.filenameTab4_3)
+
         def compare_after_payment(self):
             choice = QMessageBox.question(self, 'Message', 'Are you sure to use payment file to compare?',
                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -4327,7 +4484,8 @@ class subwindow_MAS(QMainWindow):
             if choice == QMessageBox.Yes:
                 S = SignoffAndCompare()
                 S.new_compare_after_payment(signoff_compare_PA_file=self.filenameTab4_1,
-                                            payment_raw_file=self.filenameTab4_2)
+                                            payment_raw_file=self.filenameTab4_2,
+                                            edi_837P_file=self.filenameTab4_3)
                 sleep(0.5)
                 QMessageBox.about(self, 'Message', 'File generated successfully!')
 
@@ -6116,11 +6274,11 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-
+    # #
     # s = SignoffAndCompare()
     # s.new_compare_after_payment('./CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/MAS Correction-2017-11-01-to-2017-11-30.xlsx', './TestData/NEW_PAYMENT NOV.2017 FOR CHECK.xlsx',
     #                             './CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/837P-1 Data-for-2017-11-01-to-2017-11-30.xlsx')
-    #
+
 
 
 
