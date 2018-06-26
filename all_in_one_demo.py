@@ -410,7 +410,12 @@ class EDI837P():
         # self.file_name = self.interchange_ctrl_number + '.txt'
         self.all_invoice_number = []
         self.invoice_ST_SE_dict = {}
-        self.file_name = '837-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0]  if re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(datetime.today().date())
+        if self.replace:
+            self.file_name = '837-Replace-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0] if re.findall(
+                r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(
+                datetime.today().date())
+        else:
+            self.file_name = '837-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0]  if re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(datetime.today().date())
 
 
         self.today_datetime = arrow.now().datetime
@@ -2108,18 +2113,23 @@ class SignoffAndCompare():
 
             try:
                 reclaim_replace = [round(literal_eval(row['encode_pa'])[i] - literal_eval(row['encode payment'])[i], 2) for i in range(5)]
+                real_reclaim_replace = [round(literal_eval(row['encode_pa'])[i] - literal_eval(row['encode payment'])[i], 2) for i in range(5)]
             except:
                 reclaim_replace = literal_eval(row['encode_pa'])
+                real_reclaim_replace = literal_eval(row['encode_pa'])
 
             # signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(reclaim_replace)
 
             reclaim_replace_gt_0 = [idx for idx, v in enumerate(reclaim_replace) if v > 0]
 
-            real_reclaim_replace = reclaim_replace
+
             for i in reclaim_replace_gt_0:
                 real_reclaim_replace[i] = literal_eval(row['encode_signoff'])[i]
 
             signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(real_reclaim_replace)
+
+            # print(row['invoice number'], reclaim_replace)
+
 
             if row['encode payment'] == "":
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
@@ -2127,7 +2137,7 @@ class SignoffAndCompare():
             elif all(i <= 0 for i in reclaim_replace) and row['sign-off toll fee'] <= row['payment toll fee amount']:
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Passed'
 
-            elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) and (row['sign-off toll fee'] - row['payment toll fee amount'] == row['sign-off toll fee'] or row['sign-off toll fee'] == row['payment toll fee amount']):
+            elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) or (row['sign-off toll fee'] != 0 and row['payment toll fee amount'] == 0):
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
 
             else:
@@ -2150,7 +2160,6 @@ class SignoffAndCompare():
             print('Save files to {0}'.format(file_saving_path))
 
         signoff_compare_PA_df.to_excel(os.path.join(file_saving_path, new_compare_filename), index=False)
-
 
         # For reclaim and replacement trips
         if edi_837P_file != None:
@@ -2204,11 +2213,18 @@ class SignoffAndCompare():
 
             ####################################################################################
             trips_to_reclaim = reclaim_df['invoice number'].tolist()
+            threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+
             for i in trips_to_reclaim:
+
                 idx_reclaim_df = reclaim_df.loc[reclaim_df['invoice number'] == i].index.tolist()
                 idx_reclaim_837_df = reclaim_837_df.loc[reclaim_837_df['invoice number'] == i].index.tolist()
 
                 reclaim_code = literal_eval(reclaim_df.ix[idx_reclaim_df[0], 'reclaim_replace'])
+
+
+                service_date = reclaim_df.ix[idx_reclaim_df[0], 'service_date']
+                arrow_service_date = arrow.get(service_date, 'MM/DD/YYYY').date()
 
                 signoff_tollfee = reclaim_df.ix[idx_reclaim_df[0], 'sign-off toll fee']
                 payment_tollfee = reclaim_df.ix[idx_reclaim_df[0], 'payment toll fee amount']
@@ -2217,6 +2233,16 @@ class SignoffAndCompare():
                     reclaim_tollfee = True
                 else:
                     reclaim_tollfee = False
+
+
+                #### Date check ####
+                if arrow_service_date < threshhold_date:
+                    A0100_price = 25.2
+                    S0215_price = 3.02
+                else:
+                    A0100_price = 25.95
+                    S0215_price = 3.21
+
 
                 count = 1
                 reclaim_amount = 0
@@ -2227,9 +2253,9 @@ class SignoffAndCompare():
                         if idx_code == 0:
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0100'
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = ""
-                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(float(format(c * 25.95 * 100, '.2f'))) / 100.0
+                            reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(float(format(c * A0100_price * 100, '.2f'))) / 100.0
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
-                            reclaim_amount += math.floor(float(format(c * 25.95 * 100, '.2f'))) / 100.0
+                            reclaim_amount += math.floor(float(format(c * A0100_price * 100, '.2f'))) / 100.0
 
                         elif idx_code == 1:
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'A0100'
@@ -2245,11 +2271,11 @@ class SignoffAndCompare():
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'S0215'
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'modifier code {count}'] = ""
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'amount {count}'] = math.floor(
-                                float(format(c * 3.21 * 100, '.2f'))) / 100.0
+                                float(format(c * S0215_price * 100, '.2f'))) / 100.0
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'unit {count}'] = c
 
                             reclaim_amount += math.floor(
-                                float(format(c * 3.21 * 100, '.2f'))) / 100.0
+                                float(format(c * S0215_price * 100, '.2f'))) / 100.0
 
                         elif idx_code == 3:
                             reclaim_837_df.ix[idx_reclaim_837_df[0], f'service code {count}'] = 'S0215'
@@ -3353,7 +3379,6 @@ class Process_Method():
         result.ix[last_line, 'Expected Amount'] = sum(expect_amount)
         result.ix[last_line, 'Paid Amount'] = sum(paid_amount)
         result.ix[last_line, 'Patient Firstname'] = abs(result.ix[last_line, 'Expected Amount'] - result.ix[last_line, 'Paid Amount'])
-
 
         file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
 
@@ -6274,10 +6299,7 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-    # #
-    # s = SignoffAndCompare()
-    # s.new_compare_after_payment('./CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/MAS Correction-2017-11-01-to-2017-11-30.xlsx', './TestData/NEW_PAYMENT NOV.2017 FOR CHECK.xlsx',
-    #                             './CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-20/837P-1 Data-for-2017-11-01-to-2017-11-30.xlsx')
+
 
 
 
