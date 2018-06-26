@@ -2122,9 +2122,11 @@ class SignoffAndCompare():
 
             reclaim_replace_gt_0 = [idx for idx, v in enumerate(reclaim_replace) if v > 0]
 
-
             for i in reclaim_replace_gt_0:
-                real_reclaim_replace[i] = literal_eval(row['encode_signoff'])[i]
+                if i <= 1 or i == 4:
+                    real_reclaim_replace[i] = literal_eval(row['encode_pa'])[i]
+                else:
+                    real_reclaim_replace[i] = literal_eval(row['encode_signoff'])[i]
 
             signoff_compare_PA_df.ix[l, 'reclaim_replace'] = str(real_reclaim_replace)
 
@@ -2137,12 +2139,12 @@ class SignoffAndCompare():
             elif all(i <= 0 for i in reclaim_replace) and row['sign-off toll fee'] <= row['payment toll fee amount']:
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Passed'
 
-            elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) or (row['sign-off toll fee'] != 0 and row['payment toll fee amount'] == 0):
+            elif all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0) and (row['sign-off toll fee'] != 0 and row['payment toll fee amount'] == 0):
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Reclaim'
-
+            elif not all(reclaim_replace[i] == literal_eval(row['encode_pa'])[i] for i in reclaim_replace_gt_0):
+                signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Replace'
             else:
                 signoff_compare_PA_df.ix[l, 'reclaim_replace_result'] = 'Replace'
-
 
         signoff_compare_PA_df['payment result'] = np.where(signoff_compare_PA_df['sign-off amount no toll fee'] == signoff_compare_PA_df['payment paid amount'], 'OKAY', 'DIFFERENT')
 
@@ -6282,10 +6284,9 @@ if __name__ == '__main__':
             \/            \/       \/           \/        \/ 
     '''
 
-    fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d,
-                chineseDragon, doge, alpaca, dragon]
+    fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.6.20"
+    _version = "0.6.26"
 
     print(fig_list[0])
     print('\n')
