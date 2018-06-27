@@ -25,6 +25,7 @@ from pprint import pprint
 from shapely.geometry import Point, Polygon
 import arrow
 from ast import literal_eval
+import xml.etree.ElementTree as ET
 pd.options.mode.chained_assignment = None
 
 
@@ -3306,7 +3307,7 @@ class Process_Method():
         # this step will output an excel and return a pandas dataframe for further processing
 
         S = SignoffAndCompare()
-        S.sign_off(processed_mas_df, total_job, tofile=True)
+        return S.sign_off(processed_mas_df, total_job, tofile=True)
 
     @staticmethod
     def transfer2Excel(input_file):
@@ -4266,6 +4267,15 @@ class subwindow_MAS(QMainWindow):
             btnSelect2.clicked.connect(self.select_file2)
             btnRun2 = QPushButton('Run')
             btnRun2.clicked.connect(self.mas_sign_off)
+
+            nameLabel3 = QLabel('Batch Sign-off:')
+            self.textbox3 = QLineEdit()
+            btnSelect3 = QPushButton('...')
+            btnSelect3.clicked.connect(self.select_file3)
+            btnSignoff = QPushButton('Sign-Off')
+            btnSignoff.clicked.connect(self.batchSignOff)
+
+            nameLabel4 = QLabel(f'{"*"*22}Batch Sign-off{"*"*22}')
             btnQuit2 = QPushButton('Quit')
             btnQuit2.clicked.connect(self.close_application)
 
@@ -4279,6 +4289,12 @@ class subwindow_MAS(QMainWindow):
             self.tab2.layout.addWidget(self.textbox2, 1, 1)
             self.tab2.layout.addWidget(btnSelect2, 1, 2)
             self.tab2.layout.addWidget(btnRun2, 2, 2)
+
+            self.tab2.layout.addWidget(nameLabel4, 3, 1)
+            self.tab2.layout.addWidget(nameLabel3, 4, 0)
+            self.tab2.layout.addWidget(self.textbox3, 4, 1)
+            self.tab2.layout.addWidget(btnSelect3, 4, 2)
+            self.tab2.layout.addWidget(btnSignoff, 5, 2)
 
             # self.tab2.layout.addWidget(btnQuit2, 3, 0)
             self.tab2.setLayout(self.tab2.layout)
@@ -4379,6 +4395,21 @@ class subwindow_MAS(QMainWindow):
                                                              options=QFileDialog.DontUseNativeDialog)
             self.textbox2.setText(self.file_name2)
 
+        def select_file3(self):
+            self.file_name3, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                             options=QFileDialog.DontUseNativeDialog)
+            self.textbox3.setText(self.file_name3)
+
+        def batchSignOff(self):
+            choice = QMessageBox.question(self, 'Message', 'Are you sure to submit Sign-off file?',
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if choice == QMessageBox.Yes:
+                m = MASProtocol(signoff_file=self.file_name3)
+                correct, error = m.main()
+                QMessageBox.about(self, 'Message', f'Success: {correct}, Failure (Or already attested): {error}')
+            else:
+                pass
+
         def close_application(self):
             choice = QMessageBox.question(self, 'Message',
                                           "Are you sure to quit?", QMessageBox.Yes |
@@ -4440,8 +4471,17 @@ class subwindow_MAS(QMainWindow):
 
             if choice == QMessageBox.Yes:
                 if self.file_name1:
-                    Process_Method().mas_signoff(mas_raw_data=self.file_name1, total_job=self.file_name2)
-                    QMessageBox.about(self, 'Message', 'File generated successfully!')
+                    signoff_df = Process_Method().mas_signoff(mas_raw_data=self.file_name1, total_job=self.file_name2)
+                    subChoice = QMessageBox.question(self, 'Message', 'Would you want to Sign-Off now?',
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    if subChoice == QMessageBox.Yes:
+                        m = MASProtocol(signoff_file=signoff_df)
+                        correct, error = m.main()
+                        QMessageBox.about(self, 'Message', f'Success: {correct}; Failure: {error}')
+
+                    else:
+                        QMessageBox.about(self, 'Message', 'Sign-Off File generated successfully!')
+
                 else:
                     total_job_df = pd.read_csv(self.file_name2, header=None) if self.file_name2[-1] == 'v' else pd.read_excel(
                         self.file_name2, header=None)
@@ -6032,6 +6072,138 @@ class mysqlite():
         return df
 
 
+class MASProtocol():
+    '''Work Flow:
+    StartSession --> GetSessionID --> InvoiceAttest --> (OtherProcess) --> EndSession
+
+    '''
+    def __init__(self, signoff_file):
+        self._api_key = 'PLMZTWNS11GU8P5276J12GHNW1KHDMW42OZ6W6VT4XTXQ76OT1OBBFE5ZF006JUZ'
+        self._address = 'https://www.medanswering.com/Provider_API.taf'
+        self._headers = {'Content-Type': 'application/xml'}
+        self.sessId = self.parseStartSession()
+
+        if isinstance(signoff_file, pd.DataFrame):
+            self.df = signoff_file
+        else:
+            self.df = pd.read_excel(signoff_file) if signoff_file.endswith('.xlsx') else pd.read_csv(signoff_file)
+
+        self.df = self.df.loc[self.df['LEG STATUS'] == 0]
+
+    def _makeStartSession(self):
+        xml = []
+
+        xml.append('<?xml version="1.0" encoding="utf-8" ?>')
+        xml.append('<TPRequest>')
+        xml.append(f'<authentication>{self._api_key}</authentication>')
+        xml.append('<startSession>')
+        xml.append('<attributes></attributes>')
+        xml.append('</startSession>')
+        xml.append('</TPRequest>')
+
+        return ''.join(xml)
+
+    def requestStartSession(self):
+        response = requests.post(self._address, data=self._makeStartSession(), headers=self._headers)
+        return response
+
+    def parseStartSession(self):
+        startSessionResponse = self.requestStartSession()
+        try:
+            root = ET.fromstring(startSessionResponse.text.encode('utf-8'))
+            return root.findall('.//sessionIdentifier')[0].text
+        except:
+            raise ValueError('INVALID RESPONSE!')
+
+    def _makeEndSession(self):
+        xml = []
+
+        xml.append('<?xml version="1.0" encoding="utf-8" ?>')
+        xml.append('<TPRequest>')
+        xml.append(f'<authentication>{self._api_key}</authentication>')
+        xml.append('<endSession>')
+        xml.append(f'<sessionIdentifier>{self.sessId}</sessionIdentifier>')
+        xml.append('</endSession>')
+        xml.append('</TPRequest>')
+
+        return ''.join(xml)
+
+    def requestEndSession(self):
+        response = requests.post(self._address, data=self._makeEndSession(), headers=self._headers)
+        return
+
+    def _makeInvoiceAttest(self):
+
+        uniqueInvoiceNumberList = self.df['INVOICE ID'].unique().tolist()
+        xml = []
+
+        # Fixed part1
+        xml.append('<?xml version="1.0" encoding="utf-8" ?>')
+        xml.append('<TPRequest>')
+        xml.append(f'<authentication>{self._api_key}</authentication>')
+        xml.append('<InvoiceAttest version="2">')
+        xml.append(f'<sessionIdentifier>{self.sessId}</sessionIdentifier>')
+        xml.append('<Invoices>')
+
+        for i in uniqueInvoiceNumberList:
+            idx_i = self.df.loc[self.df['INVOICE ID'] == i].index.tolist()
+
+            xml.append('<Invoice>')
+            xml.append('<Status>0</Status>')
+            xml.append(f'<invoicenumber>{i}</invoicenumber>')
+            xml.append('<legs>')
+
+            for idx in idx_i:
+                legId = self.df.ix[idx, 'LEG ID']
+                mileage = self.df.ix[idx, 'TRIP MILEAGE']
+                driverId = self.df.ix[idx, 'DRIVER ID']
+                vehicleId = self.df.ix[idx, 'VEHICLE ID']
+
+                xml.append('<leg>')
+                xml.append(f'<legnumber>{legId}</legnumber>')
+                xml.append('<legstatus>0</legstatus>')
+                xml.append(f'<usemileage>{mileage}</usemileage>')
+                xml.append(f'<driverid>{driverId}</driverid>')
+                xml.append(f'<vehicleid>{vehicleId}</vehicleid>')
+                xml.append('</leg>')
+
+            xml.append('</legs>')
+            xml.append('<services/>')
+            xml.append('</Invoice>')
+
+
+        # Fixed part2
+        xml.append('</Invoices>')
+        xml.append('</InvoiceAttest>')
+        xml.append('</TPRequest>')
+
+        # pretty print
+        # from bs4 import BeautifulSoup
+        # print(BeautifulSoup(xml_str, 'xml').prettify())
+
+        return ''.join(xml)
+
+    def requestInvoiceAttest(self):
+        response = requests.post(self._address, data=self._makeInvoiceAttest(), headers=self._headers)
+        # print(response.text)
+        try:
+            root = ET.fromstring(response.text.encode('utf-8'))
+            correct = root.findall('.//InvoicesCorrect')[0].text
+            error = root.findall('.//InvoiceErrors')[0].text
+
+            print(f'Success: {correct};\nFailure (Or already attested): {error}')
+
+        except ValueError:
+            raise
+
+        return correct, error
+
+    def main(self):
+        correct, error = self.requestInvoiceAttest()
+        self.requestEndSession()
+
+        return correct, error
+
 if __name__ == '__main__':
     chineseDragon = '''
         ......................................&&.........................
@@ -6286,7 +6458,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.6.26"
+    _version = "0.6.27"
 
     print(fig_list[0])
     print('\n')
@@ -6300,6 +6472,9 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
+
+    # m = MASProtocol(signoff_file='./CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-26/MAS Sign-off-2017-11-01-to-2017-11-30.xlsx')
+    # m.main()
 
 
 
