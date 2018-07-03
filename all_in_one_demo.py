@@ -26,7 +26,9 @@ from shapely.geometry import Point, Polygon
 import arrow
 from ast import literal_eval
 import xml.etree.ElementTree as ET
+import logging
 pd.options.mode.chained_assignment = None
+logging.getLogger().setLevel(logging.INFO)
 
 
 class info_locker():
@@ -1377,6 +1379,7 @@ class SignoffAndCompare():
 
                     code = pa_roast_df.ix[i, 'Item Code'] + pa_roast_df.ix[i, 'Item Code Mod']
                     unit = pa_roast_df.ix[i, 'Qty']
+                    # print(invoice_num)
                     if code == 'A0100':
                         temp_encode_pa[0] = int(unit)
                     elif code == 'A0100TN':
@@ -2626,7 +2629,10 @@ class Process_Method():
 
                 address = address_row1[1] + " " + address_row2[1] + " " + address_row2[2] + " " + address_row2[3]
                 # contact_name = contact_row[2]
-                contact_tel = contact_row[4]
+                try:
+                    contact_tel = contact_row[4]
+                except:
+                    contact_tel = '000000000'
 
             elif row[0] == 'NM1' and row[1] == 'P4':
                 other_payer_name.append(row[3])
@@ -6111,6 +6117,7 @@ class MASProtocol():
         startSessionResponse = self.requestStartSession()
         try:
             root = ET.fromstring(startSessionResponse.text.encode('utf-8'))
+            logging.info('Get SessionId.')
             return root.findall('.//sessionIdentifier')[0].text
         except:
             raise ValueError('INVALID RESPONSE!')
@@ -6133,6 +6140,7 @@ class MASProtocol():
         return
 
     def _makeInvoiceAttest(self):
+        logging.info('Start Invoice Attest.')
 
         uniqueInvoiceNumberList = self.df['INVOICE ID'].unique().tolist()
         xml = []
@@ -6159,6 +6167,10 @@ class MASProtocol():
                 driverId = self.df.ix[idx, 'DRIVER ID']
                 vehicleId = self.df.ix[idx, 'VEHICLE ID']
 
+                '''
+                Call Google APIs here to get geo-points.
+                '''
+
                 xml.append('<leg>')
                 xml.append(f'<legnumber>{legId}</legnumber>')
                 xml.append('<legstatus>0</legstatus>')
@@ -6171,7 +6183,6 @@ class MASProtocol():
             xml.append('<services/>')
             xml.append('</Invoice>')
 
-
         # Fixed part2
         xml.append('</Invoices>')
         xml.append('</InvoiceAttest>')
@@ -6181,17 +6192,21 @@ class MASProtocol():
         # from bs4 import BeautifulSoup
         # print(BeautifulSoup(xml_str, 'xml').prettify())
 
+        logging.info('XML data is ready.')
         return ''.join(xml)
 
     def requestInvoiceAttest(self):
+        logging.info('Uploading Invoice Attest request.')
         response = requests.post(self._address, data=self._makeInvoiceAttest(), headers=self._headers)
         # print(response.text)
+        logging.info('Parsing Report.')
         try:
             root = ET.fromstring(response.text.encode('utf-8'))
             correct = root.findall('.//InvoicesCorrect')[0].text
             error = root.findall('.//InvoiceErrors')[0].text
 
-            print(f'Success: {correct};\nFailure (Or already attested): {error}')
+            # print(f'Success: {correct};\nFailure (Or already attested): {error}')
+            logging.info(f'\nSuccess: {correct};\nFailure (Or already attested): {error}')
 
         except ValueError:
             raise
@@ -6203,6 +6218,7 @@ class MASProtocol():
         self.requestEndSession()
 
         return correct, error
+
 
 if __name__ == '__main__':
     chineseDragon = '''
@@ -6458,7 +6474,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.6.27"
+    _version = "0.7.3"
 
     print(fig_list[0])
     print('\n')
