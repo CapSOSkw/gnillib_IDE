@@ -123,6 +123,8 @@ class info_locker():
 
     driver_information = None
 
+    MAS_api_key = None
+
 
 class EDI270():
 
@@ -392,8 +394,12 @@ class EDI837P():
         self.df = pd.read_csv(file, dtype=object) if file[-1] == 'v' else pd.read_excel(file, dtype=object)
         # self.df = self.df.fillna("")
 
-        self.df['service date'] = self.df['service date'].apply(lambda x: datetime.strptime(str(x), "%m/%d/%Y").strftime("%Y%m%d"))
-        self.df['patient dob'] = self.df['patient dob'].apply(lambda x: datetime.strptime(str(x), "%m/%d/%Y").strftime("%Y%m%d"))
+        # self.df['service date'] = self.df['service date'].apply(lambda x: datetime.strptime(str(x), "%m/%d/%Y").strftime("%Y%m%d"))
+        # self.df['patient dob'] = self.df['patient dob'].apply(lambda x: datetime.strptime(str(x), "%m/%d/%Y").strftime("%Y%m%d"))
+
+        self.df['service date'] = self.df['service date'].apply(lambda x: arrow.get(str(x), ['YYYY-MM-DD HH:mm:ss', 'MM/DD/YYYY']).format('YYYYMMDD'))
+        self.df['patient dob'] = self.df['patient dob'].apply(lambda x: arrow.get(str(x), ['YYYY-MM-DD HH:mm:ss', 'MM/DD/YYYY']).format('YYYYMMDD'))
+
         self.df['patient pregnant'] = self.df['patient pregnant'].apply(lambda x: x == "Y")
 
         self.transaction_num = self.df.__len__()
@@ -413,9 +419,11 @@ class EDI837P():
         # self.file_name = self.interchange_ctrl_number + '.txt'
         self.all_invoice_number = []
         self.invoice_ST_SE_dict = {}
+
         if self.replace:
+            self.basic_line = 34
             self.file_name = '837-Replace-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0] if re.findall(
-                r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(
+                r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-Replace-' + str(
                 datetime.today().date())
         else:
             self.file_name = '837-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0]  if re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(datetime.today().date())
@@ -520,7 +528,7 @@ class EDI837P():
 
     def loop2300(self, invoice_number, amount, pa_num, delay_claim=False, payer_control_num=None): #claim info
         if amount == "":
-            amount = "0"
+            amount = 0
         if pa_num == "":
             pa_num = 0
 
@@ -530,9 +538,9 @@ class EDI837P():
             replace_code = '99:B:7'
 
         if delay_claim == True:
-            CLM = ["CLM", str(invoice_number), str(amount), "", "", replace_code, "Y", "A", "Y", "Y", "P", "","","","","","","","","","11"]
+            CLM = ["CLM", str(invoice_number), format(amount, '.2f'), "", "", replace_code, "Y", "A", "Y", "Y", "P", "","","","","","","","","","11"]
         else:
-            CLM = ["CLM", str(invoice_number), str(amount), "", "", replace_code, "Y", "A", "Y", "Y", "P"]
+            CLM = ["CLM", str(invoice_number), format(amount, '.2f'), "", "", replace_code, "Y", "A", "Y", "Y", "P"]
 
 
         REF = ['REF', "G1", str('{:>011d}'.format(int(pa_num)))]
@@ -773,10 +781,12 @@ class EDI837P():
             df_row = self.df.ix[[row]]   # get row data
 
             service_date = df_row['service date'].values[0]
+            # arrow_serviceDate = arrow.get(service_date, 'YYYYMMDD').datetime
             arrow_serviceDate = arrow.get(service_date, 'YYYYMMDD').datetime
 
+
             delayClaim_switch = True if arrow_serviceDate <= self.delayDate_line else False
-            payerControlNum = df_row['payer control number'].values[0] if delayClaim_switch == True else None
+            payerControlNum = df_row['payer control number'].values[0] if self.replace == True else None
 
             ST = self.transaction_header(iterations=row+1, invoice_number= df_row['invoice number'].values[0])
             loop1000a = self.loop1000a()
@@ -1364,7 +1374,7 @@ class SignoffAndCompare():
 
         for invoice_num in unique_invoice_signoff:
             ####### process PA roast #########
-
+            # print(invoice_num)
             idx_pa = pa_roast_df.loc[pa_roast_df['Invoice Number'] == str(invoice_num)].index.tolist()
             if idx_pa.__len__() == 0:
                 missed_trips_list.append(invoice_num)
@@ -1385,11 +1395,11 @@ class SignoffAndCompare():
                     elif code == 'A0100TN':
                         temp_encode_pa[1] = int(unit)
                     elif code == 'S0215':
-                        temp_encode_pa[2] = unit
+                        temp_encode_pa[2] = unit if unit != "" else 0
                     elif code == 'S0215TN':
-                        temp_encode_pa[3] = unit
+                        temp_encode_pa[3] = unit if unit != "" else 0
                     elif code == 'A0100SC':
-                        temp_encode_pa[4] = int(unit)
+                        temp_encode_pa[4] = int(unit) if unit != "" else 0
                     # elif code == 'A0170CG': temp_encode[5] = unit
                     else:
                         pass
@@ -1462,7 +1472,16 @@ class SignoffAndCompare():
         result_df['Service NPI'] = service_NPI
         result_df['encode_pa'] = encode_pa
         result_df['encode_signoff'] = encode_signoff
+
         result_df['compare_result'] = np.where(result_df['encode_pa'] == result_df['encode_signoff'], "", "Different")
+        for i in range(len(pa_number)):
+            # print(encode_pa[i], encode_signoff[i], invoice_num_list[i])
+            if (encode_pa[i][2] <= encode_signoff[i][2]) and \
+                    (encode_pa[i][3] <= encode_signoff[i][3]):
+                result_df.ix[i, 'compare_result'] = ""
+            else:
+                continue
+
         result_df['sign-off amount no toll fee'] = signoff_Amount_notollfee
         result_df['sign-off toll fee'] = signoff_tollfee_list
         result_df['sign-off Total Amount'] = result_df['sign-off amount no toll fee'] + result_df['sign-off toll fee']
@@ -2421,7 +2440,7 @@ class Process_Method():
 
     @staticmethod
     def transfer2lines(input_file, add_sep="~"):
-        df = pd.read_csv(input_file, delimiter="~", header=None,)
+        df = pd.read_csv(input_file, delimiter="~", header=None)
         df = df.transpose()
         df.columns = ['line']
         df['line'] = df['line'].dropna().apply(lambda x: x + add_sep)
@@ -3005,9 +3024,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3028,9 +3049,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3051,9 +3074,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3074,9 +3099,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3097,9 +3124,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3120,9 +3149,11 @@ class Process_Method():
                 elif status_code2 == 'F2:84':
                     description_status_code = ' -Service Not Authorized'
                 elif status_code2 == 'F2:483':
-                    description_status_code = ' - MAS Codes Wrong'
-                elif status_code2 == 'F2:109:DK' and next_row[10] == "F2:562:DN":
+                    description_status_code = ' - Amount Exceeded'
+                elif status_code2 == 'F2:109:DK':
                     description_status_code = ' -Wrong NPI'
+                # elif status_code2 == 'F2:85:1T':
+                #     description_status_code = ' -Need Correction'
                 else:
                     description_status_code = ""
 
@@ -3157,8 +3188,7 @@ class Process_Method():
                         'Patient Firstname': patient_firstname,
                         'CIN': CIN,
                         'Claim Ctrl Number': claim_ctrl_num,
-                        'P1 Total Expected Amt': claim_amount,
-                        'P2 Total Expected Amt': total_expected_amt,
+                        'Total Expected Amt': total_expected_amt,
                         'Total Paid Amt': total_paid_amt,
                         'Service Date': service_date,
                         'Encoded Expected Amt': encode_expected_list,
@@ -3184,7 +3214,6 @@ class Process_Method():
                         'Result': result,
                     }
 
-
                 result_dict.update(temp_dict)
 
                 #reset var.
@@ -3207,8 +3236,7 @@ class Process_Method():
         result_df = pd.DataFrame(result_dict)
         result_df = result_df.transpose()
         if edi837:
-            result_df = result_df[['Invoice Number', 'Result', 'P1 Total Expected Amt', 'P2 Total Expected Amt', 'Total Paid Amt', 'Encoded Expected Amt', 'Encoded Paid Amt',
-                               'Patient Lastname', 'Patient Firstname', 'CIN', 'Claim Ctrl Number', 'Service Date', 'NPI', 'DRIVER ID', 'VEHICLE ID']]
+            result_df = result_df[['Invoice Number', 'Result', 'Total Expected Amt', 'Total Paid Amt', 'Encoded Expected Amt', 'Encoded Paid Amt', 'Patient Lastname', 'Patient Firstname', 'CIN', 'Claim Ctrl Number', 'Service Date', 'NPI', 'DRIVER ID', 'VEHICLE ID']]
         else:
             result_df = result_df[
                 ['Invoice Number', 'Result', 'Total Expected Amt', 'Total Paid Amt', 'Encoded Expected Amt',
@@ -3415,10 +3443,10 @@ class window(QMainWindow):
         process_txt = QAction('Process .TXT', self)
         process_txt.triggered.connect(self.process_TXT)
 
-        add_base = QAction('New Base', self)
+        add_base = QAction('Base', self)
         add_base.triggered.connect(self.AddNewBase)
 
-        add_driver = QAction('New Driver', self)
+        add_driver = QAction('Driver', self)
         add_driver.triggered.connect(self.AddNewDriver)
 
         mainMenu = self.menuBar()
@@ -3542,6 +3570,13 @@ class window(QMainWindow):
         driver_df.set_index(['Fleet'], inplace=True)
         dict_driver_df = driver_df.to_dict('index')
         info_locker.driver_information = dict_driver_df if dict_driver_df else None
+
+        if not info_locker.base_info is None:
+            api_key = SQ.get_base_api_key(table='BaseApiKey', base=info_locker.base_info['BaseName'])
+        else:
+            api_key = None
+        # print(info_locker.base_info)
+        # print(api_key)
 
     def AddNewDriver(self):
         self.addnewdriver = subwindow_addDriver()
@@ -4410,9 +4445,13 @@ class subwindow_MAS(QMainWindow):
             choice = QMessageBox.question(self, 'Message', 'Are you sure to submit Sign-off file?',
                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if choice == QMessageBox.Yes:
-                m = MASProtocol(signoff_file=self.file_name3)
-                correct, error = m.main()
-                QMessageBox.about(self, 'Message', f'Success: {correct}, Failure (Or already attested): {error}')
+                if not info_locker.MAS_api_key is None:
+                    m = MASProtocol(signoff_file=self.file_name3)
+                    correct, error = m.main()
+                    QMessageBox.about(self, 'Message', f'Success: {correct}, Failure (Or already attested): {error}')
+
+                else:
+                    QMessageBox.about(self, 'Message', 'No API key in database! Sign-off terminated!')
             else:
                 pass
 
@@ -4481,9 +4520,12 @@ class subwindow_MAS(QMainWindow):
                     subChoice = QMessageBox.question(self, 'Message', 'Would you want to Sign-Off now?',
                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                     if subChoice == QMessageBox.Yes:
-                        m = MASProtocol(signoff_file=signoff_df)
-                        correct, error = m.main()
-                        QMessageBox.about(self, 'Message', f'Success: {correct}; Failure: {error}')
+                        if not info_locker.MAS_api_key is None:
+                            m = MASProtocol(signoff_file=signoff_df)
+                            correct, error = m.main()
+                            QMessageBox.about(self, 'Message', f'Success: {correct}; Failure: {error}')
+                        else:
+                            QMessageBox.about(self, 'Message', 'No API key in database! Sign-off terminated!')
 
                     else:
                         QMessageBox.about(self, 'Message', 'Sign-Off File generated successfully!')
@@ -4844,9 +4886,18 @@ class subwindow_addbase(QMainWindow):
 
             self.tabs = QTabWidget()
             self.tab1 = QWidget()
+            self.tab2 = QWidget()
+
             self.tabs.addTab(self.tab1, 'Add Base')
+            self.tabs.addTab(self.tab2, 'Add API key')
+
+            SQ = mysqlite('EDI.db')
+            base_df = pd.read_sql("SELECT * FROM AllBases", con=SQ.conn)
+            dict_base_df = base_df.to_dict('list')
+            self.only_basenames = dict_base_df['BaseName']
 
             self.mytab1()
+            self.mytab2()
 
             self.layout.addWidget(self.tabs)
             self.setLayout(self.layout)
@@ -4932,6 +4983,34 @@ class subwindow_addbase(QMainWindow):
 
             self.tab1.setLayout(self.tab1.layout)
 
+        def mytab2(self):
+            self.tab2.layout = QGridLayout()
+
+            nameLabel1 = QLabel('Base:', self)
+            self.base_combobox = QComboBox(self)
+            self.base_combobox.addItem('')
+            for base_name in self.only_basenames:
+                self.base_combobox.addItem(base_name)
+
+            nameLabel2 = QLabel('Agency:', self)
+            self.tab2_textbox1 = QLineEdit()
+            nameLabel3 = QLabel('API Key:', self)
+            self.tab2_textbox2 = QLineEdit()
+            btnAddUpdate = QPushButton('Add/Update')
+            btnAddUpdate.clicked.connect(self.addUpdateKey)
+
+            self.tab2.layout.addWidget(nameLabel1, 0, 0)
+            self.tab2.layout.addWidget(self.base_combobox, 0, 1)
+            self.tab2.layout.addWidget(nameLabel2, 1, 0)
+            self.tab2.layout.addWidget(self.tab2_textbox1, 1, 1)
+            self.tab2.layout.addWidget(nameLabel3, 2, 0)
+            self.tab2.layout.addWidget(self.tab2_textbox2, 2, 1)
+            self.tab2.layout.addWidget(btnAddUpdate, 3, 1)
+
+            self.tab2.setLayout(self.tab2.layout)
+
+
+
         def createBase2DB(self):
             basename = self.textbox1.text()
             baseaddress = self.textbox2.text()
@@ -4963,6 +5042,27 @@ class subwindow_addbase(QMainWindow):
         def showbase(self):
             self.show_new_base = subwindow_ShowNewBase()
             self.show_new_base.show()
+
+        def addUpdateKey(self):
+            SQ = mysqlite('EDI.db')
+            base_df = pd.read_sql("SELECT * FROM BaseApiKey", con=SQ.conn)
+            dict_base_df = base_df.to_dict('list')
+            only_basenames_in_keybase = dict_base_df['BaseName']
+            only_agency_in_keybase = dict_base_df['Agency']
+
+            basename = self.base_combobox.currentText()
+            agency = self.tab2_textbox1.text()
+            api_key = self.tab2_textbox2.text()
+
+            if basename in only_basenames_in_keybase and agency in only_agency_in_keybase:
+                #update
+                SQ.update_base_api_key(table='BaseApiKey', agency=agency, api_key=api_key)
+                QMessageBox.about(self, 'Message', 'API Key updated!')
+            else:
+                #upsert
+                SQ.upsert_base_api_key(table='BaseApiKey', base=basename, agency=agency, api_key=api_key)
+                QMessageBox.about(self, 'Message', 'API Key added!')
+
 
     def __init__(self):
         super(subwindow_addbase, self).__init__()
@@ -5099,6 +5199,9 @@ class subwindow_addDriver(QMainWindow):
                 driver_df = pd.read_excel(self.ImportFile_name)
                 for r in range(len(driver_df)):
                     SQ.upsert_newdriver(table='driver_info', fleet=driver_df.ix[r, 'Fleet'], base=base, firstname=driver_df.ix[r, 'FirstName'],lastname=driver_df.ix[r, 'LastName'], driverid=int(driver_df.ix[r, 'DriverID']), vehicleid=driver_df.ix[r, 'VehicleID'])
+
+                QMessageBox.about(self, 'Message', 'Drivers are added into database!')
+
 
             elif not fleet or not base or not firstname or not lastname or not driverid or not vehicleid:
                 QMessageBox.about(self, 'Message', 'All fields are required!')
@@ -6066,7 +6169,7 @@ class mysqlite():
     def upsert_newdriver(self, table, fleet, base, firstname, lastname, driverid, vehicleid):
         # print(fleet, base, firstname, lastname, driverid, vehicleid)
         self.create_table_for_driver(table)
-        self.cursor.execute('INSERT OR REPLACE INTO {0} (Fleet, Base, FirstName, LastName, DRIVER_ID, VEHICLE_ID) VALUES (?,?,?,?,?,?)'.format(table), (fleet.upper(), base, firstname.upper(), lastname.upper(), driverid, vehicleid.upper()))
+        self.cursor.execute('INSERT OR REPLACE INTO {0} (Fleet, Base, FirstName, LastName, DRIVER_ID, VEHICLE_ID) VALUES (?,?,?,?,?,?)'.format(table), (fleet, base, firstname.upper(), lastname.upper(), driverid, vehicleid.upper()))
         self.conn.commit()
 
     def delete_driver(self, table, fleet, base):
@@ -6077,6 +6180,29 @@ class mysqlite():
         df = pd.read_sql('SELECT * FROM {0} WHERE Base="{1}"'.format(table, base), con=self.conn)
         return df
 
+    def create_table_base_api_key(self, table):
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}(BaseName TEXT, APIKey TEXT, Agency TEXT, Updatedtime TEXT, UNIQUE(BaseName, Agency))'.format(table))
+
+    def upsert_base_api_key(self, table, base, agency, api_key):
+        self.create_table_base_api_key(table)
+        self.cursor.execute(f'INSERT OR IGNORE INTO {table} (BaseName, APIKey, Agency, Updatedtime) VALUES (?,?,?,?)', (base, api_key, agency, arrow.now().datetime))
+        self.conn.commit()
+
+    def update_base_api_key(self, table, base, agency, api_key):
+        self.create_table_base_api_key(table)
+        self.cursor.execute(f'UPDATE {table} SET APIKey="{api_key}", Updatedtime="{arrow.now().datetime}" WHERE BaseName="{base}" and Agency="{agency}"')
+        self.conn.commit()
+
+    def get_base_api_key(self, table, base):
+        self.create_table_base_api_key(table)
+        self.cursor.execute(f'SELECT APIKey FROM {table} WHERE BaseName="{base}"')
+        resp = self.cursor.fetchone()
+        return resp[0] if not resp is None else None
+
+    def delete_api_key(self, table, base):
+        self.cursor.execute(f'DELETE FROM {table} WHERE BaseName="{base}"')
+        self.conn.commit()
+
 
 class MASProtocol():
     '''Work Flow:
@@ -6084,7 +6210,7 @@ class MASProtocol():
 
     '''
     def __init__(self, signoff_file):
-        self._api_key = 'PLMZTWNS11GU8P5276J12GHNW1KHDMW42OZ6W6VT4XTXQ76OT1OBBFE5ZF006JUZ'
+        self._api_key = info_locker.MAS_api_key  #key
         self._address = 'https://www.medanswering.com/Provider_API.taf'
         self._headers = {'Content-Type': 'application/xml'}
         self.sessId = self.parseStartSession()
@@ -6474,7 +6600,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.7.3"
+    _version = "0.7.25"
 
     print(fig_list[0])
     print('\n')
@@ -6492,14 +6618,10 @@ if __name__ == '__main__':
     # m = MASProtocol(signoff_file='./CLEAN AIR CAR SERVICE AND PARKING COR/2018-06-26/MAS Sign-off-2017-11-01-to-2017-11-30.xlsx')
     # m.main()
 
-
-
-
-
-
-
-
-
+    # SQ = mysqlite('EDI.db')
+    # SQ.create_table_base_api_key(table='BaseApiKey')
+    # SQ.update_base_api_key(table='BaseApiKey', base='CLEAN AIR CAR SERVICE AND PARKING COR', agency='MAS', api_key='PLMZTWNS11GU8P5276J12GHNW1KHDMW42OZ6W6VT4XTXQ76OT1OBBFE5ZF006JUZ')
+    # SQ.upsert_base_api_key(table='BaseApiKey', base='CLEAN AIR CAR SERVICE AND PARKING COR', agency='MAS', api_key='PLMZTWNS11GU8P5276J12GHNW1KHDMW42OZ6W6VT4XTXQ76OT1OBBFE5ZF006JUZ')
 
 
 
