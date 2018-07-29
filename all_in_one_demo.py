@@ -3411,10 +3411,29 @@ class Process_Method():
         result['Service Date'] = service_date
         result['Code'] = all_codes
 
+        # Added on 07/29/2018
+        # Drop 'Paid Amount' = 0, but keep it if there is only one line
+        uniqueInvoice = result['Invoice Number'].unique().tolist()
+        for i in uniqueInvoice:
+            idx_result = result.loc[result['Invoice Number'] == i].index.tolist()
+
+            if all(result.ix[idx, 'Paid Amount'] == 0 for idx in idx_result) and idx_result.__len__() > 1:
+                result = result.drop(idx_result[1:])
+
+            else:
+                result = result.drop(idx for idx in idx_result if result.ix[idx, 'Paid Amount'] == 0 and idx_result.__len__() > 1)
+
+        expect_amount_value = sum(result['Expected Amount'].tolist())
+        paid_amount_value = sum(result['Paid Amount'].tolist())
+
+
         last_line = len(result) + 1
         result.ix[last_line, 'Claim Number'] = 'Total:'
-        result.ix[last_line, 'Expected Amount'] = sum(expect_amount)
-        result.ix[last_line, 'Paid Amount'] = sum(paid_amount)
+
+        # print(expect_amount_value, paid_amount_value)
+
+        result.ix[last_line, 'Expected Amount'] = expect_amount_value
+        result.ix[last_line, 'Paid Amount'] = paid_amount_value
         result.ix[last_line, 'Patient Firstname'] = abs(result.ix[last_line, 'Expected Amount'] - result.ix[last_line, 'Paid Amount'])
 
         file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
@@ -3603,7 +3622,7 @@ class subwindow_837(QMainWindow):
 
         def mytab1(self):
             self.tab1.layout = QGridLayout()
-            nameLabel1 = QLabel('Data Claims P2:')
+            nameLabel1 = QLabel('Data Claims:')
             self.textbox1 = QLineEdit()
             btnSelect1 = QPushButton('...')
             btnSelect1.clicked.connect(self.select_file1)
@@ -3986,7 +4005,7 @@ class ShowManualCheck_subwindow(QMainWindow):
         super(ShowManualCheck_subwindow, self).__init__()
         self.setGeometry(600, 600, 700, 380)
 
-        self.setWindowTitle('EDI GUI')
+        self.setWindowTitle('EDI')
         self.home()
 
     def home(self):
@@ -4016,7 +4035,7 @@ class EDI270data_subwindow(QMainWindow):
         super(EDI270data_subwindow, self).__init__()
         self.data = data
         self.setGeometry(600, 600, 1000, 500)
-        self.setWindowTitle('EDI GUI')
+        self.setWindowTitle('EDI')
         self.home()
 
     def home(self):
@@ -4107,7 +4126,7 @@ class subwindow_276_277(QMainWindow):
 
         def mytab6(self):
             self.tab6.layout = QGridLayout()
-            nameLabel1 = QLabel('Operr Claim P2:')
+            nameLabel1 = QLabel('Operr Claim:')
             self.textboxTab6_1 = QLineEdit()
             btnSelectTab6_1 = QPushButton('...')
             btnSelectTab6_1.clicked.connect(self.select_fileTab6_1)
@@ -4133,7 +4152,7 @@ class subwindow_276_277(QMainWindow):
             self.textboxTab6_3 = QLineEdit()
             self.btnSelectTab6_3 = QPushButton('...')
             self.btnSelectTab6_3.clicked.connect(self.select_fileTab6_3)
-            self.nameLabel4 = QLabel("Claims P1: \n(Optional)")
+            self.nameLabel4 = QLabel("Claims Data: \n(Optional)")
             self.textboxTab6_4 = QLineEdit()
             self.btnSelectTab6_4 = QPushButton('...')
             self.btnSelectTab6_4.clicked.connect(self.select_fileTab6_4)
@@ -4316,7 +4335,7 @@ class subwindow_MAS(QMainWindow):
             btnSignoff = QPushButton('Sign-Off')
             btnSignoff.clicked.connect(self.batchSignOff)
 
-            nameLabel4 = QLabel(f'{"*"*22}Batch Sign-off{"*"*22}')
+            nameLabel4 = QLabel(f'{"*"*18}Batch Sign-off{"*"*18}')
             btnQuit2 = QPushButton('Quit')
             btnQuit2.clicked.connect(self.close_application)
 
@@ -4761,7 +4780,7 @@ class ShowLib_subwindow(QMainWindow):
     def __init__(self):
         super(ShowLib_subwindow, self).__init__()
         self.setGeometry(600, 600, 750, 400)
-        self.setWindowTitle('EDI GUI')
+        self.setWindowTitle('EDI')
         self.home()
 
     def home(self):
@@ -5009,8 +5028,6 @@ class subwindow_addbase(QMainWindow):
 
             self.tab2.setLayout(self.tab2.layout)
 
-
-
         def createBase2DB(self):
             basename = self.textbox1.text()
             baseaddress = self.textbox2.text()
@@ -5080,7 +5097,7 @@ class subwindow_ShowNewBase(QMainWindow):
     def __init__(self):
         super(subwindow_ShowNewBase, self).__init__()
         self.setGeometry(600, 600, 750, 400)
-        self.setWindowTitle('EDI GUI')
+        self.setWindowTitle('EDI')
         self.home()
 
     def home(self):
@@ -5249,7 +5266,7 @@ class subwindow_ShowDriver(QMainWindow):
     def __init__(self):
         super(subwindow_ShowDriver, self).__init__()
         self.setGeometry(600, 600, 800, 600)
-        self.setWindowTitle('EDI GUI')
+        self.setWindowTitle('EDI')
         self.home()
 
     def home(self):
@@ -5663,7 +5680,7 @@ class MyEDITabWidget(QTabWidget):
         SQ.upsert_271_plancodes(table='PlanCodeLib', plancode=plancode, providername=providername,
                                 tel=tel, plantype=plantype)
 
-        QMessageBox.about(self, 'Message', 'Plan code {0} has been added now!'.format(plancode))
+        QMessageBox.about(self, 'Message', f'Plan code {plancode} has been added now!')
 
     def DeletePlancode(self):
         SQ = mysqlite('EDI.db')
@@ -6600,7 +6617,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.7.25"
+    _version = "0.7.29"
 
     print(fig_list[0])
     print('\n')
