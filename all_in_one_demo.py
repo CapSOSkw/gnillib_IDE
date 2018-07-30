@@ -27,6 +27,8 @@ import arrow
 from ast import literal_eval
 import xml.etree.ElementTree as ET
 import logging
+from itertools import permutations
+from collections import OrderedDict
 pd.options.mode.chained_assignment = None
 logging.getLogger().setLevel(logging.INFO)
 
@@ -3449,6 +3451,7 @@ class Process_Method():
         result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
 
 
+
 class window(QMainWindow):
 
     def __init__(self):
@@ -3468,12 +3471,16 @@ class window(QMainWindow):
         add_driver = QAction('Driver', self)
         add_driver.triggered.connect(self.AddNewDriver)
 
+        lookBack = QAction('LookBack', self)
+        lookBack.triggered.connect(self.lookback)
+
         mainMenu = self.menuBar()
         tool = mainMenu.addMenu('&Tools')
         tool.addAction(plancode_lib)
         tool.addAction(process_txt)
         tool.addAction(add_base)
         tool.addAction(add_driver)
+        tool.addAction(lookBack)
 
         SQ = mysqlite('EDI.db')
         base_df = pd.read_sql("SELECT * FROM AllBases", con=SQ.conn)
@@ -3539,6 +3546,7 @@ class window(QMainWindow):
         if not info_locker.base_info:
             QMessageBox.about(self, 'Message', 'Select Base first!')
         else:
+
             self.new_837_window = subwindow_837()
             self.new_837_window.show()
 
@@ -3600,6 +3608,13 @@ class window(QMainWindow):
     def AddNewDriver(self):
         self.addnewdriver = subwindow_addDriver()
         self.addnewdriver.show()
+
+    def lookback(self):
+        if not info_locker.base_info:
+            QMessageBox.about(self, 'Message', 'Select Base first!')
+        else:
+            self.lookback = subwindow_lookback()
+            self.lookback.show()
 
 
 class subwindow_837(QMainWindow):
@@ -5291,6 +5306,107 @@ class subwindow_ShowDriver(QMainWindow):
         self.tableWidget.resize(800, 600)
 
 
+class subwindow_lookback(QMainWindow):
+
+    class MyLookbackWidget(QTableWidget):
+        def __init__(self, parent):
+            super(QWidget, self).__init__(parent)
+            self.layout = QGridLayout(self)
+
+            self.tabs = QTabWidget()
+            self.tab1 = QWidget()
+            self.tabs.addTab(self.tab1, 'Look Back')
+
+            self.file_name1 = None
+            self.file_name2 = None
+            self.file_name3 = None
+
+            self.mytab1()
+
+            self.layout.addWidget(self.tabs)
+            self.setLayout(self.layout)
+
+        def mytab1(self):
+            self.tab1.layout = QGridLayout()
+            nameLabel1 = QLabel('Epaces PA:')
+            nameLabel2 = QLabel('MAS PA:')
+            nameLabel3 = QLabel('MAS Vendor:')
+
+            self.textbox1 = QLineEdit()
+            self.textbox2 = QLineEdit()
+            self.textbox3 = QLineEdit()
+
+            self.btnSelect1 = QPushButton('...')
+            self.btnSelect1.clicked.connect(self.selectFile1)
+
+            self.btnSelect2 = QPushButton('...')
+            self.btnSelect2.clicked.connect(self.selectFile2)
+
+            self.btnSelect3 = QPushButton('...')
+            self.btnSelect3.clicked.connect(self.selectFile3)
+
+            self.btnRun = QPushButton('Run')
+            self.btnRun.clicked.connect(self.lookback)
+
+            self.tab1.layout.addWidget(nameLabel1, 0, 0)
+            self.tab1.layout.addWidget(self.textbox1, 0, 1)
+            self.tab1.layout.addWidget(self.btnSelect1, 0, 2)
+
+            self.tab1.layout.addWidget(nameLabel2, 1, 0)
+            self.tab1.layout.addWidget(self.textbox2, 1, 1)
+            self.tab1.layout.addWidget(self.btnSelect2, 1, 2)
+
+            self.tab1.layout.addWidget(nameLabel3, 2, 0)
+            self.tab1.layout.addWidget(self.textbox3, 2, 1)
+            self.tab1.layout.addWidget(self.btnSelect3, 2, 2)
+
+            self.tab1.layout.addWidget(self.btnRun, 3, 2)
+
+            self.tab1.setLayout(self.tab1.layout)
+
+
+        def selectFile1(self):
+            self.file_name1, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox1.setText(self.file_name1)
+
+        def selectFile2(self):
+            self.file_name2, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox2.setText(self.file_name2)
+
+        def selectFile3(self):
+            self.file_name3, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox3.setText(self.file_name3)
+
+        def lookback(self):
+            choice = QMessageBox.question(self, 'Message', 'Are you sure to process?',
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if choice == QMessageBox.Yes:
+                if self.file_name1 and self.file_name2 and self.file_name3:
+
+                    l = LookBack(Epaces_PA=self.file_name1, MAS_PA=self.file_name2, MAS_vendor=self.file_name3)
+                    l.useFilesTo837()
+                    QMessageBox.about(self, 'Message', 'Look Back completed!')
+
+                else:
+                    QMessageBox.about(self, 'Message', 'Missing File!')
+
+            else:
+                pass
+
+    def __init__(self):
+        super(subwindow_lookback, self).__init__()
+        self.setGeometry(600, 600, 600, 600)
+        self.setWindowTitle('EDI')
+        self.home()
+
+    def home(self):
+        self.table_widget = self.MyLookbackWidget(self)
+        self.setCentralWidget(self.table_widget)
+
+
 class MyEDITabWidget(QTabWidget):
 
     def __init__(self, parent):
@@ -6361,6 +6477,181 @@ class MASProtocol():
         self.requestEndSession()
 
         return correct, error
+
+
+class LookBack:
+    def __init__(self, Epaces_PA, MAS_PA, MAS_vendor):
+        self.Epaces_PA = Epaces_PA
+
+        self.epaces_df = self.extractReclaim()
+
+        self.MAS_PA_df = pd.read_excel(MAS_PA)
+        self.MAS_vendor = pd.read_excel(MAS_vendor)
+        # print('init')
+
+    def decideModifer(self, amount):
+        if amount % 35 == 0 or amount % 2.25 == 0:
+            return 'TN'
+        else:
+            return ""
+
+    def extractReclaim(self):
+        epaces_df = pd.read_excel(self.Epaces_PA)
+        epaces_df = epaces_df.loc[epaces_df['RENDERED AMOUNT'] == 0]
+
+        epaces_df['MODIFER CODE'] = epaces_df['APPROVED AMOUNT'].apply(lambda x: self.decideModifer(x))
+
+        result_df = epaces_df[
+            ['PROCEDURE CODE', 'APPROVED QUANTITY', 'APPROVED AMOUNT', 'PRIOR APPROVAL NUMBER', 'MODIFER CODE']]
+
+        return result_df
+
+    def useFilesTo837(self):
+        unique_pa_num = self.epaces_df['PRIOR APPROVAL NUMBER'].unique().tolist()
+
+        edi_837_dict = {}
+        missed = []
+
+        for pa in unique_pa_num:
+
+            temp_dict = OrderedDict([
+                ('patient last name', ""),
+                ('patient first name', ""),
+                ('patient address', ""),
+                ('patient city', ""),
+                ('patient state', ""),
+                ('patient zip code', ""),
+                ('patient gender', ""),
+                ('patient pregnant', 'N'),
+                ('patient dob', ""),
+                ('patient medicaid number', ''),
+                ('invoice number', ''),
+                ('pa number', 0),
+                ('driver last name', ""),
+                ('driver first name', ""),
+                ('driver license number', ""),
+                ('driver plate number', ''),
+                ('service facility name', ""),
+                ('service address', ""),
+                ('service city', ""),
+                ('service state', ""),
+                ('service zip code', ""),
+                ('service date', ""),
+                ('service npi', 0),
+                ('claim_amount', 0),
+                ('service code 1', ""),
+                ('modifier code 1', ""),
+                ('amount 1', ""),
+                ('unit 1', ""),
+                ('service code 2', ""),
+                ('modifier code 2', ""),
+                ('amount 2', ""),
+                ('unit 2', ""),
+                ('service code 3', ""),
+                ('modifier code 3', ""),
+                ('amount 3', ""),
+                ('unit 3', ""),
+                ('service code 4', ""),
+                ('modifier code 4', ""),
+                ('amount 4', ""),
+                ('unit 4', ""),
+                ('service code 5', ""),
+                ('modifier code 5', ""),
+                ('amount 5', ""),
+                ('unit 5', ""),
+                ('service code 6', ""),
+                ('modifier code 6', ""),
+                ('amount 6', ""),
+                ('unit 6', ""),
+            ])
+
+            idx_pa_df = self.MAS_PA_df.loc[self.MAS_PA_df['Prior Approval Number'] == pa].index.tolist()
+            idx_reclaim_df = self.epaces_df.loc[self.epaces_df['PRIOR APPROVAL NUMBER'] == pa].index.tolist()
+
+            if idx_pa_df.__len__() == 0:
+                missed.append(pa)
+                continue
+
+            else:
+                invoice_number = self.MAS_PA_df.ix[idx_pa_df[0], 'Invoice Number']
+                # print(invoice_number)
+                idx_vendor_df = self.MAS_vendor.loc[self.MAS_vendor['Invoice Number'] == invoice_number].index.tolist()
+                if idx_vendor_df.__len__() == 0:
+                    missed.append(pa)
+                    continue
+                else:
+
+                    temp_dict['patient last name'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Last Name'].upper()
+                    temp_dict['patient first name'] = self.MAS_vendor.ix[idx_vendor_df[0], 'First Name'].upper()
+                    temp_dict['patient address'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up Address']
+                    temp_dict['patient city'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up City']
+                    temp_dict['patient state'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up State']
+                    temp_dict['patient zip code'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up Zip']
+                    temp_dict['patient gender'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Gender']
+                    temp_dict['patient dob'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Birthdate']
+                    temp_dict['patient medicaid number'] = self.MAS_vendor.ix[idx_vendor_df[0], 'CIN']
+                    temp_dict['invoice number'] = invoice_number
+                    temp_dict['service facility name'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Medical Provider'].replace(",",
+                                                                                                                    "").upper()
+                    temp_dict['service address'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off Address']
+                    temp_dict['service city'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off City']
+                    temp_dict['service state'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off State']
+                    temp_dict['service zip code'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off Zip']
+                    temp_dict['service date'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Service Starts']
+                    temp_dict['service npi'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Ordering Provider ID']
+
+                    temp_dict['pa number'] = pa
+
+                    # read driver_info
+                    # read database
+                    # print('read drivers')
+
+                    driver_info_keys = list(info_locker.driver_information.keys())
+                    random_idx = random.randint(0, len(driver_info_keys)-1)
+
+                    # driver_df = pd.read_excel('newbell driver list temp.xlsx')
+                    # i = random.randint(0, 4)
+
+                    temp_dict['driver license number'] = info_locker.driver_information[driver_info_keys[random_idx]]['DRIVER_ID']
+                    temp_dict['driver plate number'] = info_locker.driver_information[driver_info_keys[random_idx]]['VEHICLE_ID']
+                    temp_dict['driver first name'] = info_locker.driver_information[driver_info_keys[random_idx]]['FirstName']
+                    temp_dict['driver last name'] = info_locker.driver_information[driver_info_keys[random_idx]]['LastName']
+
+                    count = 1
+                    total_amount = 0
+                    for idx in idx_reclaim_df:
+                        code_position = f"service code {count}"
+                        modifier_position = f"modifier code {count}"
+                        amount_position = f"amount {count}"
+                        unit_position = f"unit {count}"
+
+                        temp_dict[code_position] = self.epaces_df.ix[idx, 'PROCEDURE CODE']
+                        temp_dict[modifier_position] = self.epaces_df.ix[idx, 'MODIFER CODE']
+                        temp_dict[amount_position] = self.epaces_df.ix[idx, 'APPROVED AMOUNT']
+                        temp_dict[unit_position] = self.epaces_df.ix[idx, 'APPROVED QUANTITY']
+                        total_amount += self.epaces_df.ix[idx, 'APPROVED AMOUNT']
+
+                        count += 1
+
+                    total_amount = float(format(total_amount, '.2f'))
+                    temp_dict['claim_amount'] = total_amount
+
+                    edi_837_dict[str(invoice_number)] = temp_dict
+
+        missed_df = pd.DataFrame({'Missed PA': missed})
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder, 'Lookback')
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
+        # missed_df.to_excel(os.path.join(file_saving_path, 'Missing Trips.xlsx'), index=False)
+        edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
+        edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
+
 
 
 if __name__ == '__main__':
