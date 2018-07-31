@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import QApplication, QTableWidgetItem, QTableWidget, QWidge
 from PyQt5.QtWidgets import QCalendarWidget, QFontDialog, QColorDialog, QTextEdit, QFileDialog, QComboBox
 from PyQt5.QtWidgets import QCheckBox, QProgressBar, QComboBox, QLabel, QStyleFactory, QLineEdit, QInputDialog, QHBoxLayout, QGridLayout
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QFont
 import sqlite3
 from sqlalchemy import create_engine
 from pprint import pprint
@@ -3451,7 +3452,6 @@ class Process_Method():
         result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
 
 
-
 class window(QMainWindow):
 
     def __init__(self):
@@ -3491,43 +3491,70 @@ class window(QMainWindow):
 
     def home(self):
         btn837 = QPushButton('Operr Claim', self)
+        btn837.setFont(QFont('Monaco', 13))
         btn837.clicked.connect(self.open_837_subwindow)
-        btn837.resize(140, 40)
+        btn837.resize(140, 50)
         btn837.move(50, 20)
 
         nameLabel1 = QLabel('Base:', self)
+        nameLabel1.setFont(QFont('Monaco', 13))
         self.base_combobox = QComboBox(self)
         self.base_combobox.addItem('')
         for base_name in self.only_basenames:
             self.base_combobox.addItem(base_name)
+            self.base_combobox.setFont(QFont('Calibri (Body)', 12))
         # self.base_combobox.addItem('Clean Air Base')
         nameLabel1.move(280, 35)
         self.base_combobox.move(320, 25)
-        self.base_combobox.resize(140, 40)
+        self.base_combobox.resize(140, 50)
         self.base_combobox.activated[str].connect(self.Select_base_and_save_info)
 
-        btn270_271 = QPushButton('Eligibility Checking', self)
+        btn270_271 = QPushButton('Eligibility\nChecking', self)
+        btn270_271.setFont(QFont('Monaco', 13))
         btn270_271.clicked.connect(self.open_270_271_subwindow)
-        btn270_271.resize(140, 40)
+        btn270_271.resize(140, 50)
         btn270_271.move(50, 80)
 
         btn276_277 = QPushButton('Payment Check', self)
+        btn276_277.setFont(QFont('Monaco', 13))
         btn276_277.clicked.connect(self.open_276_277_subwindow)
-        btn276_277.resize(140, 40)
+        btn276_277.resize(140, 50)
         btn276_277.move(50, 140)
 
         btnMAS = QPushButton('MAS Billing', self)
+        btnMAS.setFont(QFont('Monaco', 13))
         btnMAS.clicked.connect(self.open_MAS_subwindow)
-        btnMAS.resize(140, 40)
+        btnMAS.resize(140, 50)
         btnMAS.move(50, 200)
 
         btnQuit = QPushButton('Close', self)
+        btnQuit.setFont(QFont('Monaco', 13))
         btnQuit.clicked.connect(self.close_application)
         btnQuit.resize(100, 40)
         btnQuit.move(380, 230)
 
 
         _versionLabel = QLabel(_version, self)
+        _versionLabel.setFont(QFont("Roman times",9))
+        _versionLabel.setToolTip('''
+        Copyright <2018> <Keyuan Wu>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+WHETHER IN AN ACTION OF CONTRACT, TORT OROTHERWISE, ARISING FROM, OUT OF OR IN 
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.''')
         _versionLabel.move(10, 250)
 
         self.show()
@@ -5364,7 +5391,6 @@ class subwindow_lookback(QMainWindow):
 
             self.tab1.setLayout(self.tab1.layout)
 
-
         def selectFile1(self):
             self.file_name1, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
@@ -5398,7 +5424,7 @@ class subwindow_lookback(QMainWindow):
 
     def __init__(self):
         super(subwindow_lookback, self).__init__()
-        self.setGeometry(600, 600, 600, 600)
+        self.setGeometry(600, 600, 600, 380)
         self.setWindowTitle('EDI')
         self.home()
 
@@ -6908,7 +6934,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.7.29"
+    _version = "0.7.31"
 
     print(fig_list[0])
     print('\n')
