@@ -6812,7 +6812,9 @@ class LookBack_standard:
 
         # self.MAS_raw_data = pd.read_table(MAS_vendor) if MAS_vendor.endswith('.txt') else pd.read_excel(MAS_vendor)
         self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
-        # self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor['Record Type'] == 'Service')
+
+        self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor.index[self.MAS_vendor.loc[self.MAS_vendor['Record Type'] == 'Service'].index])
+
         self.MAS_vendor['Invoice Number'] = self.MAS_vendor['Invoice Number'].apply(lambda x: int(x[:-1]))
         self.MAS_vendor = self.MAS_vendor.fillna("")
 
@@ -7312,8 +7314,8 @@ if __name__ == '__main__':
     run()
     # info_locker.base_info = {'BaseName': 'CHA CHA TRANSPORTATION CORP', 'BaseAddress': '61-43 186TH', 'City': 'FRESH MEADOWS', 'State': 'NY', 'zipcode': '11365', 'ETIN': 'BHE9', 'NPI': '1164894523', 'MedicaidProviderNum': '04421972', 'TaxID': '47-2858948', 'ContactName': 'SAM', 'ContactTel': '9783804452', 'LocationCode': '003'}
     # info_locker.driver_information = {'304': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JAEKU', 'LastName': 'CHOI', 'DRIVER_ID': 411567580, 'VEHICLE_ID': 'T652663C'}, '306': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JUNPYO', 'LastName': 'LEE', 'DRIVER_ID': 459408897, 'VEHICLE_ID': 'T629746C'}, '300': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'CHANGHEE', 'LastName': 'JUNG', 'DRIVER_ID': 462984400, 'VEHICLE_ID': 'T725251C'}, '307': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'EUNCHUL', 'LastName': 'LEE', 'DRIVER_ID': 477024930, 'VEHICLE_ID': 'T647539C'}, '311': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'WILSON', 'LastName': 'DAMIANO', 'DRIVER_ID': 549135996, 'VEHICLE_ID': 'T705403C'}, '302': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DOHYO', 'LastName': 'HWANG', 'DRIVER_ID': 642332532, 'VEHICLE_ID': 'T754351C'}, '312': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'ANUP', 'LastName': 'GOMES', 'DRIVER_ID': 647711518, 'VEHICLE_ID': 'T724984C'}, '310': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DIANA', 'LastName': 'RAMOS', 'DRIVER_ID': 845260458, 'VEHICLE_ID': 'T759153C'}, '303': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'YOUNGBAE', 'LastName': 'KIM', 'DRIVER_ID': 883385323, 'VEHICLE_ID': 'T705993C'}}
-    #
-    # look = LookBack_standard('#1-01-01-2018 TO 05-30-2018 LOOK BACK.xlsx', 'Roster-Export-2018-08-14-09-18-05.txt', 'Vendor-31226-2018-08-10-14-46-08.txt')
+    # #
+    # look = LookBack_standard('NY minute Test/#1-01-01-2018 TO 05-30-2018 LOOK BACK.xlsx', 'NY minute Test/Roster-Export-01-02_2018 to 01-20_2018.txt', 'NY minute Test/Vendor-01-02-2018 to 01-10-2018.txt')
     # look.useFilesTo837()
 
 
