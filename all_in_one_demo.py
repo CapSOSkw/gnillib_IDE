@@ -29,7 +29,7 @@ from ast import literal_eval
 import xml.etree.ElementTree as ET
 import logging
 from itertools import permutations
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 pd.options.mode.chained_assignment = None
 logging.getLogger().setLevel(logging.INFO)
 
@@ -3487,9 +3487,8 @@ class Process_Method():
         result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
 
     @staticmethod
-    def generate_processed_MAS(mas_raw_data):
-        Process_MAS(mas_raw_data).add_codes(tofile=True)
-
+    def generate_processed_MAS(mas_raw_data, tofile=True):
+        Process_MAS(mas_raw_data).add_codes(tofile=tofile)
 
 
 class window(QMainWindow):
@@ -3656,7 +3655,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.''')
         base_df = pd.read_sql("SELECT * FROM AllBases WHERE BaseName='{0}'".format(text), con=SQ.conn)
         dict_base_df = base_df.to_dict('records')
         info_locker.base_info = dict_base_df[0] if dict_base_df else None
-        # print(info_locker.base_info)
+        print(info_locker.base_info)
 
         driver_df = pd.read_sql("SELECT * FROM driver_info WHERE Base='{0}'".format(text), con=SQ.conn)
         driver_df.set_index(['Fleet'], inplace=True)
@@ -6796,6 +6795,252 @@ class LookBack:
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
 
+class LookBack_standard:
+    def __init__(self, PA, MAS_PA, MAS_vendor):
+        '''
+
+        :param PA: 第三方给的回执 （.XLSX）
+        :param MAS_PA: MAS 里所有PA ROSTER (.TXT) 合并的一个文件
+        :param MAS_vendor: MAS 里所有 MAS VENDOR (.TXT) 合并的一个文件
+        '''
+        self.PA_df = pd.read_excel(PA)
+        self.PA_list = self.PA_df['Prior #'].astype(int).unique().tolist()
+
+        self.MAS_PA_df = pd.read_table(MAS_PA) if MAS_PA.endswith('.txt') else pd.read_excel(MAS_PA)
+        self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
+
+
+        # self.MAS_raw_data = pd.read_table(MAS_vendor) if MAS_vendor.endswith('.txt') else pd.read_excel(MAS_vendor)
+        self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
+        # self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor['Record Type'] == 'Service')
+        self.MAS_vendor['Invoice Number'] = self.MAS_vendor['Invoice Number'].apply(lambda x: int(x[:-1]))
+        self.MAS_vendor = self.MAS_vendor.fillna("")
+
+    def useFilesTo837(self):
+
+        edi_837_dict = {}
+        missed = []
+
+        for pa in self.PA_list:
+            code_dict = defaultdict(int)
+            temp_dict = OrderedDict([
+                ('patient last name', ""),
+                ('patient first name', ""),
+                ('patient address', ""),
+                ('patient city', ""),
+                ('patient state', ""),
+                ('patient zip code', ""),
+                ('patient gender', ""),
+                ('patient pregnant', 'N'),
+                ('patient dob', ""),
+                ('patient medicaid number', ''),
+                ('invoice number', ''),
+                ('pa number', 0),
+                ('driver last name', ""),
+                ('driver first name', ""),
+                ('driver license number', ""),
+                ('driver plate number', ''),
+                ('service facility name', ""),
+                ('service address', ""),
+                ('service city', ""),
+                ('service state', ""),
+                ('service zip code', ""),
+                ('service date', ""),
+                ('service npi', 0),
+                ('claim_amount', 0),
+                ('service code 1', ""),
+                ('modifier code 1', ""),
+                ('amount 1', ""),
+                ('unit 1', ""),
+                ('service code 2', ""),
+                ('modifier code 2', ""),
+                ('amount 2', ""),
+                ('unit 2', ""),
+                ('service code 3', ""),
+                ('modifier code 3', ""),
+                ('amount 3', ""),
+                ('unit 3', ""),
+                ('service code 4', ""),
+                ('modifier code 4', ""),
+                ('amount 4', ""),
+                ('unit 4', ""),
+                ('service code 5', ""),
+                ('modifier code 5', ""),
+                ('amount 5', ""),
+                ('unit 5', ""),
+                ('service code 6', ""),
+                ('modifier code 6', ""),
+                ('amount 6', ""),
+                ('unit 6', ""),
+            ])
+
+            idx_pa_df = self.MAS_PA_df.loc[self.MAS_PA_df['Prior Approval Number'] == pa].index.tolist()
+
+            if idx_pa_df.__len__ == 0:
+                missed.append(pa)
+
+            else:
+                invoice_number = self.MAS_PA_df.ix[idx_pa_df[0], 'Invoice Number']
+                idx_vendor_df = self.MAS_vendor.loc[self.MAS_vendor['Invoice Number'] == invoice_number].index.tolist()
+
+                if idx_vendor_df.__len__() == 0:
+                    missed.append(pa)
+                    continue
+                else:
+                    temp_dict['patient last name'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Last Name'].upper()
+                    temp_dict['patient first name'] = self.MAS_vendor.ix[idx_vendor_df[0], 'First Name'].upper()
+                    temp_dict['patient address'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up Address']
+                    temp_dict['patient city'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up City']
+                    temp_dict['patient state'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up State']
+                    temp_dict['patient zip code'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Pick-up Zip']
+                    temp_dict['patient gender'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Gender']
+                    temp_dict['patient dob'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Birthdate']
+                    temp_dict['patient medicaid number'] = self.MAS_vendor.ix[idx_vendor_df[0], 'CIN']
+                    temp_dict['invoice number'] = invoice_number
+                    temp_dict['service facility name'] = self.MAS_vendor.ix[
+                        idx_vendor_df[0], 'Medical Provider'].replace(",",
+                                                                      "").upper()
+                    temp_dict['service address'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off Address']
+                    temp_dict['service city'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off City']
+                    temp_dict['service state'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off State']
+                    temp_dict['service zip code'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Drop-off Zip']
+                    temp_dict['service date'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Service Starts']
+                    temp_dict['service npi'] = self.MAS_vendor.ix[idx_vendor_df[0], 'Ordering Provider ID']
+
+                    temp_dict['pa number'] = pa
+
+                    driver_info_keys = list(info_locker.driver_information.keys())
+                    random_idx = random.randint(0, len(driver_info_keys) - 1)
+
+                    temp_dict['driver license number'] = info_locker.driver_information[driver_info_keys[random_idx]]['DRIVER_ID']
+                    temp_dict['driver plate number'] = info_locker.driver_information[driver_info_keys[random_idx]]['VEHICLE_ID']
+                    temp_dict['driver first name'] = info_locker.driver_information[driver_info_keys[random_idx]]['FirstName']
+                    temp_dict['driver last name'] = info_locker.driver_information[driver_info_keys[random_idx]]['LastName']
+
+                    for idx in idx_vendor_df:
+                        if self.MAS_vendor.at[idx, 'Code1'] != "":
+                            code_dict[self.MAS_vendor.at[idx, 'Code1'] + self.MAS_vendor.at[idx, 'Code1 Modifier']] += 1
+
+                        elif self.MAS_vendor.at[idx, 'Code2'] != "":
+                            code_dict[self.MAS_vendor.at[idx, 'Code2'] + self.MAS_vendor.at[idx, 'Code2 Modifier']] += 1
+
+                        elif self.MAS_vendor.at[idx, 'Code3'] != "":
+                            code_dict[self.MAS_vendor.at[idx, 'Code3'] + self.MAS_vendor.at[idx, 'Code3 Modifier']] += 1
+
+                        else:
+                            continue
+
+                    threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
+                    edi_temp_date = self.MAS_vendor.ix[idx_vendor_df[0], 'Service Starts']
+
+                    if arrow.get(edi_temp_date, 'MM/DD/YYYY').date() < threshhold_date:
+                        info_locker.decoding_info = {
+                            '0': {'code': 'A0100', 'modifier': "", 'price': 25.2},
+                            '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                            '2': {'code': 'S0215', 'modifier': "", 'price': 3.02},
+                            '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                            '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                            '5': {'code': 'A0170', 'modifier': "CG", }
+                        }
+                    else:
+                        info_locker.decoding_info = {
+                            '0': {'code': 'A0100', 'modifier': "", 'price': 25.95},
+                            '1': {'code': 'A0100', 'modifier': "TN", 'price': 35},
+                            '2': {'code': 'S0215', 'modifier': "", 'price': 3.21},
+                            '3': {'code': 'S0215', 'modifier': "TN", 'price': 2.25},
+                            '4': {'code': 'A0100', 'modifier': "SC", 'price': 25},
+                            '5': {'code': 'A0170', 'modifier': "CG", }
+                        }
+
+                    count = 1
+                    total_amount = 0
+                    for code in code_dict.keys():
+                        code_position = f"service code {count}"
+                        modifier_position = f"modifier code {count}"
+                        amount_position = f"amount {count}"
+                        unit_position = f"unit {count}"
+
+
+                        if code == 'A0100':
+                            unit = code_dict[code]
+                            amount = code_dict[code] * info_locker.decoding_info['0']['price']
+                            amount = float(format(amount, '.2f'))
+
+                            temp_dict[code_position] = 'A0100'
+                            temp_dict[modifier_position] = ''
+                            temp_dict[amount_position] = amount
+                            temp_dict[unit_position] = unit
+                            total_amount += amount
+
+                        elif code == 'A0100TN':
+                            unit = code_dict[code]
+                            amount = code_dict[code] * info_locker.decoding_info['1']['price']
+                            amount = float(format(amount, '.2f'))
+
+                            temp_dict[code_position] = 'A0100'
+                            temp_dict[modifier_position] = 'TN'
+                            temp_dict[amount_position] = amount
+                            temp_dict[unit_position] = unit
+                            total_amount += amount
+
+                        elif code == 'S0215':
+                            unit = code_dict[code]
+                            amount = code_dict[code] * info_locker.decoding_info['2']['price']
+                            amount = float(format(amount, '.2f'))
+
+                            temp_dict[code_position] = 'S0215'
+                            temp_dict[modifier_position] = ''
+                            temp_dict[amount_position] = amount
+                            temp_dict[unit_position] = unit
+                            total_amount += amount
+
+                        elif code == 'S0215TN':
+                            unit = code_dict[code]
+                            amount = code_dict[code] * info_locker.decoding_info['3']['price']
+                            amount = float(format(amount, '.2f'))
+
+                            temp_dict[code_position] = 'S0215'
+                            temp_dict[modifier_position] = 'TN'
+                            temp_dict[amount_position] = amount
+                            temp_dict[unit_position] = unit
+                            total_amount += amount
+
+                        elif code == 'A0100SC':
+                            unit = code_dict[code]
+                            amount = code_dict[code] * info_locker.decoding_info['4']['price']
+                            amount = float(format(amount, '.2f'))
+
+                            temp_dict[code_position] = 'A0100'
+                            temp_dict[modifier_position] = 'SC'
+                            temp_dict[amount_position] = amount
+                            temp_dict[unit_position] = unit
+                            total_amount += amount
+
+                        else:
+                            continue
+
+                        count += 1
+
+                    total_amount = float(format(total_amount, '.2f'))
+                    temp_dict['claim_amount'] = total_amount
+                    edi_837_dict[str(invoice_number)] = temp_dict
+
+        missed_df = pd.DataFrame({'Missed PA': missed})
+
+        current_path = os.getcwd()
+        daily_folder = str(datetime.today().date())
+        basename = info_locker.base_info['BaseName']
+        file_saving_path = os.path.join(current_path, basename, daily_folder, 'Lookback')
+        if not os.path.exists(file_saving_path):
+            os.makedirs(file_saving_path)
+            print('Save files to {0}'.format(file_saving_path))
+
+        missed_df.to_excel(os.path.join(file_saving_path, 'Missing Trips.xlsx'), index=False)
+        edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
+        edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
+
+
+
 
 if __name__ == '__main__':
     chineseDragon = '''
@@ -7065,8 +7310,11 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-
-
+    # info_locker.base_info = {'BaseName': 'CHA CHA TRANSPORTATION CORP', 'BaseAddress': '61-43 186TH', 'City': 'FRESH MEADOWS', 'State': 'NY', 'zipcode': '11365', 'ETIN': 'BHE9', 'NPI': '1164894523', 'MedicaidProviderNum': '04421972', 'TaxID': '47-2858948', 'ContactName': 'SAM', 'ContactTel': '9783804452', 'LocationCode': '003'}
+    # info_locker.driver_information = {'304': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JAEKU', 'LastName': 'CHOI', 'DRIVER_ID': 411567580, 'VEHICLE_ID': 'T652663C'}, '306': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JUNPYO', 'LastName': 'LEE', 'DRIVER_ID': 459408897, 'VEHICLE_ID': 'T629746C'}, '300': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'CHANGHEE', 'LastName': 'JUNG', 'DRIVER_ID': 462984400, 'VEHICLE_ID': 'T725251C'}, '307': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'EUNCHUL', 'LastName': 'LEE', 'DRIVER_ID': 477024930, 'VEHICLE_ID': 'T647539C'}, '311': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'WILSON', 'LastName': 'DAMIANO', 'DRIVER_ID': 549135996, 'VEHICLE_ID': 'T705403C'}, '302': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DOHYO', 'LastName': 'HWANG', 'DRIVER_ID': 642332532, 'VEHICLE_ID': 'T754351C'}, '312': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'ANUP', 'LastName': 'GOMES', 'DRIVER_ID': 647711518, 'VEHICLE_ID': 'T724984C'}, '310': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DIANA', 'LastName': 'RAMOS', 'DRIVER_ID': 845260458, 'VEHICLE_ID': 'T759153C'}, '303': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'YOUNGBAE', 'LastName': 'KIM', 'DRIVER_ID': 883385323, 'VEHICLE_ID': 'T705993C'}}
+    #
+    # look = LookBack_standard('#1-01-01-2018 TO 05-30-2018 LOOK BACK.xlsx', 'Roster-Export-2018-08-14-09-18-05.txt', 'Vendor-31226-2018-08-10-14-46-08.txt')
+    # look.useFilesTo837()
 
 
 
