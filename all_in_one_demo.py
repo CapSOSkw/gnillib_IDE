@@ -1,8 +1,10 @@
 '''
-**
-* @Author: Keyuan Wu
-* @Update: 08/06/2018
-**
+
+@Author: Keyuan Wu
+@Update: 08/19/2018
+
+DON'T ASK WHY! IT WORKS THOU!
+
 '''
 import pandas as pd
 import numpy as np
@@ -34,7 +36,7 @@ pd.options.mode.chained_assignment = None
 logging.getLogger().setLevel(logging.INFO)
 
 
-class info_locker():
+class info_locker:
     nyc_zip = [10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009,
                10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024,
                10025, 10026,
@@ -128,7 +130,8 @@ class info_locker():
     MAS_api_key = None
 
 
-class EDI270():
+#Generate EDI 270
+class EDI270:
 
     def __init__(self, file):
 
@@ -253,8 +256,8 @@ class EDI270():
 
         return ISA + GS + ST_SE + GE + IEA
 
-
-class EDI276():
+#Generate EDI 276
+class EDI276:
 
     def __init__(self, file):
         if isinstance(file, pd.DataFrame):
@@ -376,7 +379,8 @@ class EDI276():
         return ISA + GS + ST_SE + GE + IEA
 
 
-class EDI837P():
+#Generate EDI 837
+class EDI837P:
 
     def __init__(self, file, replace=False):
         self.replace = replace
@@ -825,7 +829,7 @@ class EDI837P():
 
 
 # Get Processed MAS File (Excel) Only based on MAS Raw Data (Process_MAS)
-class Process_MAS():
+class Process_MAS:
 
     def __init__(self, raw_file):
 
@@ -1035,7 +1039,7 @@ class Process_MAS():
 
 
 # Get MAS Sign Off File (Excel) based on both Total Jobs and Processed MAS
-class SignoffAndCompare():
+class SignoffAndCompare:
     def __init__(self):
         pass
 
@@ -1307,6 +1311,8 @@ class SignoffAndCompare():
 
         return sign_off_df
 
+
+    #Compare Sign Off File and PA Roster, Get 837P without PA#, Get the MAS Correction File, Get MAS Correction File (Excel) for Check Payment, Get 837P - 1 Data file (Excel)
     def compare_signoff_PA(self, signoff, pa_file, tofile=False, to837=False, mas_2=None):
         '''
         Encode unit or Qty as order: [A0100, A0100TN, A0215, A0215TN, A0100SC, A0170CG]
@@ -1967,6 +1973,8 @@ class SignoffAndCompare():
 
         return result_df
 
+
+   # Check Payment File(Excel) For checking the payment
     def new_compare_after_payment(self, signoff_compare_PA_file, payment_raw_file, edi_837P_file=None):
 
         new_compare_filename0 = re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', signoff_compare_PA_file)[0]
@@ -2323,7 +2331,7 @@ class SignoffAndCompare():
             reclaim_837_df.to_excel(os.path.join(file_saving_path, 'Reclaim_837P_' + new_compare_filename0 + '.xlsx'), index=False)
 
 
-class Process_Method():
+class Process_Method:
 
     def __init__(self):
         pass
@@ -2336,7 +2344,7 @@ class Process_Method():
             if value['DRIVER_ID'] == driverid:
                 return value['FirstName'], value['LastName']
 
-    @staticmethod
+    @staticmethod   ## If possible, use paid API keys. These KEYS are free and limited.
     def is_in_nassau(address):
         google_geocode_api_url = "https://maps.googleapis.com/maps/api/geocode/json"
         key_list = ['AIzaSyCJ69KvhuscmlIgr5IqyOideByOqJzZHcs', 'AIzaSyA-2V1w_acgbN4RO-40e2HJiwnzuMFtrrQ',
@@ -2358,7 +2366,7 @@ class Process_Method():
         # print(text)
         return 'Nassau County' in text
 
-    @staticmethod
+    @staticmethod   # Free geocoding, but low precision
     def add2geo(address):
         geo = None
         count = 0
@@ -2372,7 +2380,7 @@ class Process_Method():
             sleep(0.1)
         return geo[0], geo[1]
 
-    @staticmethod
+    @staticmethod   # If possible, use paid API keys. These KEYS are free and limited.
     def google2geo(address):
         google_geocode_api_url = "https://maps.googleapis.com/maps/api/geocode/json"
         key_list = ['AIzaSyCJ69KvhuscmlIgr5IqyOideByOqJzZHcs', 'AIzaSyA-2V1w_acgbN4RO-40e2HJiwnzuMFtrrQ',
@@ -2403,7 +2411,7 @@ class Process_Method():
         else:
             print("On 110st!")
 
-    @staticmethod
+    @staticmethod   # Clean address. Remove Apt, Fl, etc.
     def clean_address(x):
         if type(x) is float:
             return
@@ -2419,7 +2427,7 @@ class Process_Method():
                     del a[a.index(i) + 1:]
             return " ".join(a)
 
-    @staticmethod
+    @staticmethod  # Transfer EDI file to lined .txt file for easy reading
     def transfer2lines(input_file, add_sep="~"):
         df = pd.read_csv(input_file, delimiter="~", header=None)
         df = df.transpose()
@@ -2428,7 +2436,7 @@ class Process_Method():
         inputfile_name = input_file.split("/")[-1]
         df.to_csv("Lined-"+inputfile_name, index=False, header=None)
 
-    @staticmethod
+    @staticmethod  # Anti-process for transfer2lines()
     def transfer2stream(input_file, add_delimiter=False):
         df = pd.read_csv(input_file, names=['lines'])
 
@@ -2441,12 +2449,12 @@ class Process_Method():
         with open('Stream-' + inputfile_name, 'w') as f:
             f.write(result)
 
-    @staticmethod
+    @staticmethod   # Output to .txt file
     def write_txt(data, output_file):
         with open(output_file, 'w') as f:
             f.write(data)
 
-    @staticmethod
+    @staticmethod  # Not using
     def get_receipt_code(receipt_file, lined_file=True):
         if lined_file==False:    # for raw receipt data
             receipt_df = pd.read_csv(receipt_file, delimiter="~", header=None,)
@@ -2484,7 +2492,7 @@ class Process_Method():
 
         return res_dict
 
-    @staticmethod   #  Process 271[10001]to know which trip could be assigned to Driver
+    @staticmethod   #  Process 271[10001]to know which trip could be assigned to Driver, Need to put 'Pending' in the column of Eligibility Result File (Excel), Need to put 'Okay' in the column of Eligibility Result File (Excel)
     def process_270_receipt(receipt_file, lined_file=True):
         '''
         :param receipt_file: receipt file from EDI270
@@ -2803,7 +2811,7 @@ class Process_Method():
         result_df.to_excel(os.path.join(file_saving_path, '271-' + file_name_271 + '.xlsx'), index=False)
         return result_df
 
-    @staticmethod
+    @staticmethod   # Compare 837 (Excel) & 50001 File (TXT), Generate 276 based on 50001(generate_276)
     def generate_276(receipt837_file, edi837_data, lined_file=True):
         df_837 = pd.read_csv(edi837_data) if edi837_data[-1] == 'v' else pd.read_excel(edi837_data)
 
@@ -2911,7 +2919,7 @@ class Process_Method():
         Process_Method().write_txt(stream_276_data, os.path.join(file_saving_path, filename))
         return
 
-    @staticmethod
+    @staticmethod   # Compare 277[90001] File(TXT) with 837(Excel) (Process_276_receipt)
     def process_276_receipt(receipt_file, edi837=None, lined_file=True):
         if lined_file==False:    # for raw receipt data
             receipt_df = pd.read_csv(receipt_file, delimiter="~", header=None,)
@@ -3001,24 +3009,7 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
                     resp = SQ.cursor.fetchone()
@@ -3034,24 +3025,7 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
                     resp = SQ.cursor.fetchone()
@@ -3067,24 +3041,6 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3101,24 +3057,7 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3135,24 +3074,7 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3169,24 +3091,7 @@ class Process_Method():
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3354,7 +3259,7 @@ class Process_Method():
 
         return
 
-    @staticmethod
+    @staticmethod   # Get EDI based on 837(TXT)
     def generate_837(data, replace_switch):
         edi = EDI837P(data, replace_switch)   # new 一个837P
         stream_837data = edi.ISA_IEA()    # 一个string， 要转成.txt
@@ -3381,12 +3286,17 @@ class Process_Method():
         S = SignoffAndCompare()
         return S.sign_off(processed_mas_df, total_job, tofile=True)
 
-    @staticmethod
+    @staticmethod  # Output EXCEL files to ROOT path, accept .txt and .csv files.
     def transfer2Excel(input_file):
-        df = pd.read_csv(input_file)
+
+        if input_file.endswith('.txt'):
+            df = pd.read_table(input_file)
+        elif input_file.endswith('.csv'):
+            df = pd.read_csv(input_file)
+
         df.to_excel(f'{input_file}_EXCEL.xlsx', index=False)
 
-    @staticmethod
+    @staticmethod  # 835 File (Excel)
     def process_835(receipt_file, lined_file=True):
         if lined_file==False:    # for raw receipt data
             receipt_df = pd.read_csv(receipt_file, delimiter="~", header=None,)
@@ -3410,8 +3320,16 @@ class Process_Method():
         patient_fn = []
         patient_medicaid = []
         service_date = []
+        payment_date = ""
 
         all_codes = []
+
+        row_RPB = receipt_df.ix[3, 1]
+
+        try:
+            payment_date = row_RPB[-1]
+        except:
+            payment_date = 'NA'
 
         for i in range(0, len(clp_idx)-1):
             code = []
@@ -3464,8 +3382,7 @@ class Process_Method():
         expect_amount_value = sum(result['Expected Amount'].tolist())
         paid_amount_value = sum(result['Paid Amount'].tolist())
 
-
-        last_line = len(result) + 1
+        last_line = len(result) + 5
         result.ix[last_line, 'Claim Number'] = 'Total:'
 
         # print(expect_amount_value, paid_amount_value)
@@ -3473,6 +3390,9 @@ class Process_Method():
         result.ix[last_line, 'Expected Amount'] = expect_amount_value
         result.ix[last_line, 'Paid Amount'] = paid_amount_value
         result.ix[last_line, 'Patient Firstname'] = abs(result.ix[last_line, 'Expected Amount'] - result.ix[last_line, 'Paid Amount'])
+
+        result.ix[last_line+1, 'Claim Number'] = 'Payment Date:'
+        result.ix[last_line + 1, 'Expected Amount'] = payment_date
 
         file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
 
@@ -3484,11 +3404,11 @@ class Process_Method():
             os.makedirs(file_saving_path)
             print('Save files to {0}'.format(file_saving_path))
 
-        result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
+        result.to_excel(os.path.join(file_saving_path, f'835-Decoding-{payment_date}-${paid_amount_value}-' + file_name_835 + '.xlsx'), index=False)
 
     @staticmethod
-    def generate_processed_MAS(mas_raw_data, tofile=True):
-        Process_MAS(mas_raw_data).add_codes(tofile=tofile)
+    def generate_processed_MAS(mas_raw_data):
+        Process_MAS(mas_raw_data).add_codes(tofile=True)
 
 
 class window(QMainWindow):
@@ -3655,7 +3575,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.''')
         base_df = pd.read_sql("SELECT * FROM AllBases WHERE BaseName='{0}'".format(text), con=SQ.conn)
         dict_base_df = base_df.to_dict('records')
         info_locker.base_info = dict_base_df[0] if dict_base_df else None
-        print(info_locker.base_info)
+        # print(info_locker.base_info)
 
         driver_df = pd.read_sql("SELECT * FROM driver_info WHERE Base='{0}'".format(text), con=SQ.conn)
         driver_df.set_index(['Fleet'], inplace=True)
@@ -4564,7 +4484,6 @@ class subwindow_MAS(QMainWindow):
             self.tab5.layout.addWidget(btnRun1, 0, 3)
             self.tab5.setLayout(self.tab5.layout)
 
-
         def select_file(self):
             self.file_name, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                             options=QFileDialog.DontUseNativeDialog)
@@ -4764,7 +4683,6 @@ class subwindow_MAS(QMainWindow):
                 S = SignoffAndCompare()
                 S.compare_signoff_PA(self.filenameTab3_1, self.filenameTab3_2, tofile=True, to837=self.bool_to837_file,
                                      mas_2=self.filenameTab3_3)
-                #sleep(0.5)
                 QMessageBox.about(self, 'Message', 'File Generated Successfully!')
 
             else:
@@ -4782,7 +4700,6 @@ class subwindow_MAS(QMainWindow):
 
             else:
                 pass
-
 
     def __init__(self):
         super(subwindow_MAS, self).__init__()
@@ -5221,8 +5138,11 @@ class subwindow_addbase(QMainWindow):
                 QMessageBox.about(self, 'Message', 'API Key updated!')
             else:
                 #upsert
-                SQ.upsert_base_api_key(table='BaseApiKey', base=basename, agency=agency, api_key=api_key)
-                QMessageBox.about(self, 'Message', 'API Key added!')
+                if not basename == '' and not agency == '' and not api_key == '':
+                    SQ.upsert_base_api_key(table='BaseApiKey', base=basename, agency=agency, api_key=api_key)
+                    QMessageBox.about(self, 'Message', 'API Key added!')
+                else:
+                    QMessageBox.about(self, 'Message', 'All fields REQUIRED!')
 
     def __init__(self):
         super(subwindow_addbase, self).__init__()
@@ -6260,7 +6180,7 @@ class MyTabWidget(QTabWidget):
             pass
 
 
-class mysqlite():
+class mysqlite:
 
     def __init__(self, BaseName):
         self.conn = sqlite3.connect(BaseName)
@@ -6466,28 +6386,28 @@ class mysqlite():
         resp = self.cursor.fetchone()
         return resp[0] if not resp is None else None
 
-    def delete_api_key(self, table, base):
-        self.cursor.execute(f'DELETE FROM {table} WHERE BaseName="{base}"')
+    def delete_api_key(self, table, base, agency):
+        self.cursor.execute(f'DELETE FROM {table} WHERE BaseName="{base}" AND Agency="{agency}"')
         self.conn.commit()
 
 
-class MASProtocol():
+class MASProtocol:
     '''Work Flow:
     StartSession --> GetSessionID --> InvoiceAttest --> (OtherProcess) --> EndSession
 
     '''
     def __init__(self, signoff_file):
-        self._api_key = info_locker.MAS_api_key  #key
+        self._api_key = info_locker.MAS_api_key  #Get MAS api key
         self._address = 'https://www.medanswering.com/Provider_API.taf'
         self._headers = {'Content-Type': 'application/xml'}
-        self.sessId = self.parseStartSession()
+        self.sessId = self.parseStartSession()  # Get session ID
 
-        if isinstance(signoff_file, pd.DataFrame):
+        if isinstance(signoff_file, pd.DataFrame):   # Read Sign-off file
             self.df = signoff_file
         else:
             self.df = pd.read_excel(signoff_file) if signoff_file.endswith('.xlsx') else pd.read_csv(signoff_file)
 
-        self.df = self.df.loc[self.df['LEG STATUS'] == 0]
+        self.df = self.df.loc[self.df['LEG STATUS'] == 0]   # Read only the legs that we've finished
 
     def _makeStartSession(self):
         xml = []
@@ -6794,14 +6714,15 @@ class LookBack:
         edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
-
+# Standard Lookback. Given PA numbers from other bases, we can find invoice numbers in MAS PA roster, then use invoice
+# numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P).
 class LookBack_standard:
-    def __init__(self, PA, MAS_PA, MAS_vendor):
+    def __init__(self, PA, MAS_PA, MAS_vendor, read_from_processedMAS=False):
         '''
 
         :param PA: 第三方给的回执 （.XLSX）
-        :param MAS_PA: MAS 里所有PA ROSTER (.TXT) 合并的一个文件
-        :param MAS_vendor: MAS 里所有 MAS VENDOR (.TXT) 合并的一个文件
+        :param MAS_PA: MAS 里所有PA ROSTER (.TXT) 合并的一个文件 (.txt or .xlsx acceptable)
+        :param MAS_vendor: MAS 里所有 MAS VENDOR (.TXT) 合并的一个文件 (.txt or .xlsx acceptable)
         '''
         self.PA_df = pd.read_excel(PA)
         self.PA_list = self.PA_df['Prior #'].astype(int).unique().tolist()
@@ -6811,8 +6732,13 @@ class LookBack_standard:
 
 
         # self.MAS_raw_data = pd.read_table(MAS_vendor) if MAS_vendor.endswith('.txt') else pd.read_excel(MAS_vendor)
-        self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
-        # self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor['Record Type'] == 'Service')
+        if read_from_processedMAS == False:
+            self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
+        else:
+            self.MAS_vendor = pd.read_excel(MAS_vendor)
+
+        self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor.index[self.MAS_vendor.loc[self.MAS_vendor['Record Type'] == 'Service'].index])
+
         self.MAS_vendor['Invoice Number'] = self.MAS_vendor['Invoice Number'].apply(lambda x: int(x[:-1]))
         self.MAS_vendor = self.MAS_vendor.fillna("")
 
@@ -6822,6 +6748,7 @@ class LookBack_standard:
         missed = []
 
         for pa in self.PA_list:
+
             code_dict = defaultdict(int)
             temp_dict = OrderedDict([
                 ('patient last name', ""),
@@ -6876,9 +6803,10 @@ class LookBack_standard:
 
             idx_pa_df = self.MAS_PA_df.loc[self.MAS_PA_df['Prior Approval Number'] == pa].index.tolist()
 
-            if idx_pa_df.__len__ == 0:
-                missed.append(pa)
 
+            if idx_pa_df.__len__() == 0:
+                missed.append(pa)
+                continue
             else:
                 invoice_number = self.MAS_PA_df.ix[idx_pa_df[0], 'Invoice Number']
                 idx_vendor_df = self.MAS_vendor.loc[self.MAS_vendor['Invoice Number'] == invoice_number].index.tolist()
@@ -7296,7 +7224,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.8.16"
+    _version = "0.8.19"
 
     print(fig_list[0])
     print('\n')
@@ -7310,10 +7238,11 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-    # info_locker.base_info = {'BaseName': 'CHA CHA TRANSPORTATION CORP', 'BaseAddress': '61-43 186TH', 'City': 'FRESH MEADOWS', 'State': 'NY', 'zipcode': '11365', 'ETIN': 'BHE9', 'NPI': '1164894523', 'MedicaidProviderNum': '04421972', 'TaxID': '47-2858948', 'ContactName': 'SAM', 'ContactTel': '9783804452', 'LocationCode': '003'}
-    # info_locker.driver_information = {'304': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JAEKU', 'LastName': 'CHOI', 'DRIVER_ID': 411567580, 'VEHICLE_ID': 'T652663C'}, '306': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JUNPYO', 'LastName': 'LEE', 'DRIVER_ID': 459408897, 'VEHICLE_ID': 'T629746C'}, '300': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'CHANGHEE', 'LastName': 'JUNG', 'DRIVER_ID': 462984400, 'VEHICLE_ID': 'T725251C'}, '307': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'EUNCHUL', 'LastName': 'LEE', 'DRIVER_ID': 477024930, 'VEHICLE_ID': 'T647539C'}, '311': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'WILSON', 'LastName': 'DAMIANO', 'DRIVER_ID': 549135996, 'VEHICLE_ID': 'T705403C'}, '302': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DOHYO', 'LastName': 'HWANG', 'DRIVER_ID': 642332532, 'VEHICLE_ID': 'T754351C'}, '312': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'ANUP', 'LastName': 'GOMES', 'DRIVER_ID': 647711518, 'VEHICLE_ID': 'T724984C'}, '310': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DIANA', 'LastName': 'RAMOS', 'DRIVER_ID': 845260458, 'VEHICLE_ID': 'T759153C'}, '303': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'YOUNGBAE', 'LastName': 'KIM', 'DRIVER_ID': 883385323, 'VEHICLE_ID': 'T705993C'}}
-    #
-    # look = LookBack_standard('#1-01-01-2018 TO 05-30-2018 LOOK BACK.xlsx', 'Roster-Export-2018-08-14-09-18-05.txt', 'Vendor-31226-2018-08-10-14-46-08.txt')
+    # info_locker.base_info = {'BaseName': 'NY Minute Car Svc, Inc (NYC)', 'BaseAddress': '2809 WEBSTER AVE\n', 'City': 'BRONX', 'State': 'NY', 'zipcode': '10458', 'ETIN': 'ARY7', 'NPI': '03850194', 'MedicaidProviderNum': '03851094', 'TaxID': '453369374', 'ContactName': 'SATHOSH THOMAS', 'ContactTel': '2017259798', 'LocationCode': '003'}
+    # info_locker.driver_information = {'#181': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'FRANKLIN', 'LastName': 'MEDRANO', 'DRIVER_ID': 127061367, 'VEHICLE_ID': 'T739991C'}, '#251': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLA', 'LastName': 'LOPEZ', 'DRIVER_ID': 166901208, 'VEHICLE_ID': 'T768251C'}, '#156': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ESTHER', 'LastName': 'PUENTE', 'DRIVER_ID': 171955252, 'VEHICLE_ID': 'T615563C'}, '#142': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ANGEL', 'LastName': 'VILLAR', 'DRIVER_ID': 212880845, 'VEHICLE_ID': 'T657516C'}, '#260': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'JANI', 'LastName': 'ROJAS', 'DRIVER_ID': 235618804, 'VEHICLE_ID': 'T768366C'}, '#158': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'GUZMAN', 'DRIVER_ID': 284798918, 'VEHICLE_ID': 'T757954C'}, '#216': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'MATOS', 'DRIVER_ID': 370424297, 'VEHICLE_ID': 'T735125C'}, '#241': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'ALMANZAR', 'DRIVER_ID': 453228738, 'VEHICLE_ID': 'T772168C'}, '#253': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARIAS', 'LastName': 'DEIBY', 'DRIVER_ID': 535435046, 'VEHICLE_ID': 'T749660C'}, '#324': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLOS', 'LastName': 'AVILA', 'DRIVER_ID': 620548879, 'VEHICLE_ID': 'T679971C'}, '#389': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ADRIANA', 'LastName': 'CONTRERAS', 'DRIVER_ID': 622212126, 'VEHICLE_ID': 'T691089C'}, '#139': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GUILLERMO', 'LastName': 'PAYANO', 'DRIVER_ID': 624143915, 'VEHICLE_ID': 'T723065C'}, '#311': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'AMBIORIX', 'LastName': 'PEREZ', 'DRIVER_ID': 668973114, 'VEHICLE_ID': 'T731144C'}, '#177': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GLEIDER', 'LastName': 'ESPINAL', 'DRIVER_ID': 672166762, 'VEHICLE_ID': 'T752532C'}, '#206': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'HENRY', 'LastName': 'MARTINEZ', 'DRIVER_ID': 757112367, 'VEHICLE_ID': 'T637928C'}, '#186': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARISTIDES', 'LastName': 'EUSTATE', 'DRIVER_ID': 766417031, 'VEHICLE_ID': 'T617606C'}, '#265': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'QUIROZ', 'DRIVER_ID': 784531671, 'VEHICLE_ID': 'T749821C'}, '#373': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALFRED', 'LastName': 'HUGER', 'DRIVER_ID': 813620708, 'VEHICLE_ID': 'T603357C'}, '#198': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'DALIA', 'LastName': 'FELICIANO', 'DRIVER_ID': 890708091, 'VEHICLE_ID': 'T731163C'}, '#203': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARGENIS', 'LastName': 'ROBLES', 'DRIVER_ID': 892656228, 'VEHICLE_ID': 'T731496C'}, '#214': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'EDGAR', 'LastName': 'YNFANTE', 'DRIVER_ID': 950900330, 'VEHICLE_ID': 'T672252C'}}
+
+
+    # look = LookBack_standard('NY minute Test/02-01-2018-05-02-2018 LOOK BACK.xlsx', 'NY minute Test/NY minute PA Roster 02-01-2018-05-02-2018 .xlsx', 'NY minute Test/NY minute Processed MAS 02-01-2018-2018-05-02.xlsx', read_from_processedMAS=True)
     # look.useFilesTo837()
 
 
