@@ -34,7 +34,7 @@ pd.options.mode.chained_assignment = None
 logging.getLogger().setLevel(logging.INFO)
 
 
-class info_locker():
+class info_locker:
     nyc_zip = [10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009,
                10010, 10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024,
                10025, 10026,
@@ -128,7 +128,8 @@ class info_locker():
     MAS_api_key = None
 
 
-class EDI270():
+#Generate EDI 270
+class EDI270:
 
     def __init__(self, file):
 
@@ -254,7 +255,8 @@ class EDI270():
         return ISA + GS + ST_SE + GE + IEA
 
 
-class EDI276():
+#Generate EDI 276
+class EDI276:
 
     def __init__(self, file):
         if isinstance(file, pd.DataFrame):
@@ -376,7 +378,8 @@ class EDI276():
         return ISA + GS + ST_SE + GE + IEA
 
 
-class EDI837P():
+#Generate EDI 837
+class EDI837P:
 
     def __init__(self, file, replace=False):
         self.replace = replace
@@ -825,7 +828,7 @@ class EDI837P():
 
 
 # Get Processed MAS File (Excel) Only based on MAS Raw Data (Process_MAS)
-class Process_MAS():
+class Process_MAS:
 
     def __init__(self, raw_file):
 
@@ -1035,8 +1038,7 @@ class Process_MAS():
 
 
 # Get MAS Sign Off File (Excel) based on both Total Jobs and Processed MAS
-
-class SignoffAndCompare():
+class SignoffAndCompare:
     def __init__(self):
         pass
 
@@ -2328,7 +2330,7 @@ class SignoffAndCompare():
             reclaim_837_df.to_excel(os.path.join(file_saving_path, 'Reclaim_837P_' + new_compare_filename0 + '.xlsx'), index=False)
 
 
-class Process_Method():
+class Process_Method:
 
     def __init__(self):
         pass
@@ -2341,7 +2343,7 @@ class Process_Method():
             if value['DRIVER_ID'] == driverid:
                 return value['FirstName'], value['LastName']
 
-    @staticmethod
+    @staticmethod   ## If possible, use paid API keys. These KEYS are free and limited.
     def is_in_nassau(address):
         google_geocode_api_url = "https://maps.googleapis.com/maps/api/geocode/json"
         key_list = ['AIzaSyCJ69KvhuscmlIgr5IqyOideByOqJzZHcs', 'AIzaSyA-2V1w_acgbN4RO-40e2HJiwnzuMFtrrQ',
@@ -2363,7 +2365,7 @@ class Process_Method():
         # print(text)
         return 'Nassau County' in text
 
-    @staticmethod
+    @staticmethod   # Free geocoding, but low precision
     def add2geo(address):
         geo = None
         count = 0
@@ -2377,7 +2379,7 @@ class Process_Method():
             sleep(0.1)
         return geo[0], geo[1]
 
-    @staticmethod
+    @staticmethod   # If possible, use paid API keys. These KEYS are free and limited.
     def google2geo(address):
         google_geocode_api_url = "https://maps.googleapis.com/maps/api/geocode/json"
         key_list = ['AIzaSyCJ69KvhuscmlIgr5IqyOideByOqJzZHcs', 'AIzaSyA-2V1w_acgbN4RO-40e2HJiwnzuMFtrrQ',
@@ -2408,7 +2410,7 @@ class Process_Method():
         else:
             print("On 110st!")
 
-    @staticmethod
+    @staticmethod   # Clean address. Remove Apt, Fl, etc.
     def clean_address(x):
         if type(x) is float:
             return
@@ -2424,7 +2426,7 @@ class Process_Method():
                     del a[a.index(i) + 1:]
             return " ".join(a)
 
-    @staticmethod
+    @staticmethod  # Transfer EDI file to lined .txt file for easy reading
     def transfer2lines(input_file, add_sep="~"):
         df = pd.read_csv(input_file, delimiter="~", header=None)
         df = df.transpose()
@@ -2433,7 +2435,7 @@ class Process_Method():
         inputfile_name = input_file.split("/")[-1]
         df.to_csv("Lined-"+inputfile_name, index=False, header=None)
 
-    @staticmethod
+    @staticmethod  # Anti-process for transfer2lines()
     def transfer2stream(input_file, add_delimiter=False):
         df = pd.read_csv(input_file, names=['lines'])
 
@@ -2446,12 +2448,12 @@ class Process_Method():
         with open('Stream-' + inputfile_name, 'w') as f:
             f.write(result)
 
-    @staticmethod
+    @staticmethod   # Output to .txt file
     def write_txt(data, output_file):
         with open(output_file, 'w') as f:
             f.write(data)
 
-    @staticmethod
+    @staticmethod  # Not using
     def get_receipt_code(receipt_file, lined_file=True):
         if lined_file==False:    # for raw receipt data
             receipt_df = pd.read_csv(receipt_file, delimiter="~", header=None,)
@@ -3386,9 +3388,14 @@ class Process_Method():
         S = SignoffAndCompare()
         return S.sign_off(processed_mas_df, total_job, tofile=True)
 
-    @staticmethod
+    @staticmethod  # Output EXCEL files to ROOT path
     def transfer2Excel(input_file):
-        df = pd.read_csv(input_file)
+
+        if input_file.endswith('.txt'):
+            df = pd.read_table(input_file)
+        elif input_file.endswith('.csv'):
+            df = pd.read_csv(input_file)
+
         df.to_excel(f'{input_file}_EXCEL.xlsx', index=False)
 
     @staticmethod  # 835 File (Excel)
@@ -3477,7 +3484,6 @@ class Process_Method():
         expect_amount_value = sum(result['Expected Amount'].tolist())
         paid_amount_value = sum(result['Paid Amount'].tolist())
 
-
         last_line = len(result) + 5
         result.ix[last_line, 'Claim Number'] = 'Total:'
 
@@ -3500,7 +3506,7 @@ class Process_Method():
             os.makedirs(file_saving_path)
             print('Save files to {0}'.format(file_saving_path))
 
-        result.to_excel(os.path.join(file_saving_path, '835-Decoding-' + file_name_835 + '.xlsx'), index=False)
+        result.to_excel(os.path.join(file_saving_path, f'835-Decoding-{payment_date}-${paid_amount_value}-' + file_name_835 + '.xlsx'), index=False)
 
     @staticmethod
     def generate_processed_MAS(mas_raw_data):
@@ -4580,7 +4586,6 @@ class subwindow_MAS(QMainWindow):
             self.tab5.layout.addWidget(btnRun1, 0, 3)
             self.tab5.setLayout(self.tab5.layout)
 
-
         def select_file(self):
             self.file_name, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                             options=QFileDialog.DontUseNativeDialog)
@@ -4780,7 +4785,6 @@ class subwindow_MAS(QMainWindow):
                 S = SignoffAndCompare()
                 S.compare_signoff_PA(self.filenameTab3_1, self.filenameTab3_2, tofile=True, to837=self.bool_to837_file,
                                      mas_2=self.filenameTab3_3)
-                #sleep(0.5)
                 QMessageBox.about(self, 'Message', 'File Generated Successfully!')
 
             else:
@@ -4798,7 +4802,6 @@ class subwindow_MAS(QMainWindow):
 
             else:
                 pass
-
 
     def __init__(self):
         super(subwindow_MAS, self).__init__()
@@ -6276,7 +6279,7 @@ class MyTabWidget(QTabWidget):
             pass
 
 
-class mysqlite():
+class mysqlite:
 
     def __init__(self, BaseName):
         self.conn = sqlite3.connect(BaseName)
@@ -6487,23 +6490,23 @@ class mysqlite():
         self.conn.commit()
 
 
-class MASProtocol():
+class MASProtocol:
     '''Work Flow:
     StartSession --> GetSessionID --> InvoiceAttest --> (OtherProcess) --> EndSession
 
     '''
     def __init__(self, signoff_file):
-        self._api_key = info_locker.MAS_api_key  #key
+        self._api_key = info_locker.MAS_api_key  #Get MAS api key
         self._address = 'https://www.medanswering.com/Provider_API.taf'
         self._headers = {'Content-Type': 'application/xml'}
-        self.sessId = self.parseStartSession()
+        self.sessId = self.parseStartSession()  # Get session ID
 
-        if isinstance(signoff_file, pd.DataFrame):
+        if isinstance(signoff_file, pd.DataFrame):   # Read Sign-off file
             self.df = signoff_file
         else:
             self.df = pd.read_excel(signoff_file) if signoff_file.endswith('.xlsx') else pd.read_csv(signoff_file)
 
-        self.df = self.df.loc[self.df['LEG STATUS'] == 0]
+        self.df = self.df.loc[self.df['LEG STATUS'] == 0]   # Read only the legs that we've finished
 
     def _makeStartSession(self):
         xml = []
@@ -6810,14 +6813,15 @@ class LookBack:
         edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
-
+# Standard Lookback. Given PA numbers from other bases, we can find invoice numbers in MAS PA roster, then use invoice
+# numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P).
 class LookBack_standard:
     def __init__(self, PA, MAS_PA, MAS_vendor):
         '''
 
         :param PA: 第三方给的回执 （.XLSX）
-        :param MAS_PA: MAS 里所有PA ROSTER (.TXT) 合并的一个文件
-        :param MAS_vendor: MAS 里所有 MAS VENDOR (.TXT) 合并的一个文件
+        :param MAS_PA: MAS 里所有PA ROSTER (.TXT) 合并的一个文件 (.txt or .xlsx acceptable)
+        :param MAS_vendor: MAS 里所有 MAS VENDOR (.TXT) 合并的一个文件 (.txt or .xlsx acceptable)
         '''
         self.PA_df = pd.read_excel(PA)
         self.PA_list = self.PA_df['Prior #'].astype(int).unique().tolist()
