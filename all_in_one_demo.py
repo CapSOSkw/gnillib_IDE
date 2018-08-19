@@ -1,8 +1,10 @@
 '''
-**
-* @Author: Keyuan Wu
-* @Update: 08/06/2018
-**
+
+@Author: Keyuan Wu
+@Update: 08/19/2018
+
+DON'T ASK WHY! IT WORKS THOU!
+
 '''
 import pandas as pd
 import numpy as np
@@ -253,7 +255,6 @@ class EDI270:
         IEA = self.IEA()
 
         return ISA + GS + ST_SE + GE + IEA
-
 
 #Generate EDI 276
 class EDI276:
@@ -3008,24 +3009,7 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
                     resp = SQ.cursor.fetchone()
@@ -3041,24 +3025,7 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
                     resp = SQ.cursor.fetchone()
@@ -3074,24 +3041,6 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3108,24 +3057,7 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3142,24 +3074,7 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3176,24 +3091,7 @@ class Process_Method:
 
                 next_row = receipt_df.ix[l + 1, 1]
                 status_code2 = next_row[1]
-                # if status_code2 == 'P0:252':
-                #     description_status_code = ' -No PA Number'
-                # elif status_code2 == 'F2:54':
-                #     description_status_code = ' -Duplicated Claim'
-                # elif status_code2 == 'F2:84':
-                #     description_status_code = ' -Service Not Authorized'
-                # elif status_code2 == 'F2:483':
-                #     description_status_code = ' - Amount Exceeded'
-                # elif status_code2 == 'F2:109:DK':
-                #     description_status_code = ' -Wrong NPI'
-                # elif status_code2 == 'F2:718':
-                #     description_status_code = ' -Timely Filing'
-                # # elif status_code2 == 'F2:85:1T':
-                # #     description_status_code = ' -Need Correction'
-                # else:
-                #     description_status_code = ""
-                #
-                # result = result + description_status_code
+
 
                 for code in status_code2.split(":"):
                     SQ.cursor.execute(f'SELECT Description FROM ResponseCodeFor276277 WHERE Code="{code}"')
@@ -3388,7 +3286,7 @@ class Process_Method:
         S = SignoffAndCompare()
         return S.sign_off(processed_mas_df, total_job, tofile=True)
 
-    @staticmethod  # Output EXCEL files to ROOT path
+    @staticmethod  # Output EXCEL files to ROOT path, accept .txt and .csv files.
     def transfer2Excel(input_file):
 
         if input_file.endswith('.txt'):
@@ -5240,8 +5138,11 @@ class subwindow_addbase(QMainWindow):
                 QMessageBox.about(self, 'Message', 'API Key updated!')
             else:
                 #upsert
-                SQ.upsert_base_api_key(table='BaseApiKey', base=basename, agency=agency, api_key=api_key)
-                QMessageBox.about(self, 'Message', 'API Key added!')
+                if not basename == '' and not agency == '' and not api_key == '':
+                    SQ.upsert_base_api_key(table='BaseApiKey', base=basename, agency=agency, api_key=api_key)
+                    QMessageBox.about(self, 'Message', 'API Key added!')
+                else:
+                    QMessageBox.about(self, 'Message', 'All fields REQUIRED!')
 
     def __init__(self):
         super(subwindow_addbase, self).__init__()
@@ -6485,8 +6386,8 @@ class mysqlite:
         resp = self.cursor.fetchone()
         return resp[0] if not resp is None else None
 
-    def delete_api_key(self, table, base):
-        self.cursor.execute(f'DELETE FROM {table} WHERE BaseName="{base}"')
+    def delete_api_key(self, table, base, agency):
+        self.cursor.execute(f'DELETE FROM {table} WHERE BaseName="{base}" AND Agency="{agency}"')
         self.conn.commit()
 
 
@@ -6816,7 +6717,7 @@ class LookBack:
 # Standard Lookback. Given PA numbers from other bases, we can find invoice numbers in MAS PA roster, then use invoice
 # numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P).
 class LookBack_standard:
-    def __init__(self, PA, MAS_PA, MAS_vendor):
+    def __init__(self, PA, MAS_PA, MAS_vendor, read_from_processedMAS=False):
         '''
 
         :param PA: 第三方给的回执 （.XLSX）
@@ -6831,7 +6732,10 @@ class LookBack_standard:
 
 
         # self.MAS_raw_data = pd.read_table(MAS_vendor) if MAS_vendor.endswith('.txt') else pd.read_excel(MAS_vendor)
-        self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
+        if read_from_processedMAS == False:
+            self.MAS_vendor = Process_MAS(MAS_vendor).add_codes()
+        else:
+            self.MAS_vendor = pd.read_excel(MAS_vendor)
 
         self.MAS_vendor = self.MAS_vendor.drop(self.MAS_vendor.index[self.MAS_vendor.loc[self.MAS_vendor['Record Type'] == 'Service'].index])
 
@@ -6844,6 +6748,7 @@ class LookBack_standard:
         missed = []
 
         for pa in self.PA_list:
+
             code_dict = defaultdict(int)
             temp_dict = OrderedDict([
                 ('patient last name', ""),
@@ -6898,9 +6803,10 @@ class LookBack_standard:
 
             idx_pa_df = self.MAS_PA_df.loc[self.MAS_PA_df['Prior Approval Number'] == pa].index.tolist()
 
-            if idx_pa_df.__len__ == 0:
-                missed.append(pa)
 
+            if idx_pa_df.__len__() == 0:
+                missed.append(pa)
+                continue
             else:
                 invoice_number = self.MAS_PA_df.ix[idx_pa_df[0], 'Invoice Number']
                 idx_vendor_df = self.MAS_vendor.loc[self.MAS_vendor['Invoice Number'] == invoice_number].index.tolist()
@@ -7318,7 +7224,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
     fig_list = np.random.permutation(fig_list)
-    _version = "0.8.16"
+    _version = "0.8.19"
 
     print(fig_list[0])
     print('\n')
@@ -7332,10 +7238,11 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-    # info_locker.base_info = {'BaseName': 'CHA CHA TRANSPORTATION CORP', 'BaseAddress': '61-43 186TH', 'City': 'FRESH MEADOWS', 'State': 'NY', 'zipcode': '11365', 'ETIN': 'BHE9', 'NPI': '1164894523', 'MedicaidProviderNum': '04421972', 'TaxID': '47-2858948', 'ContactName': 'SAM', 'ContactTel': '9783804452', 'LocationCode': '003'}
-    # info_locker.driver_information = {'304': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JAEKU', 'LastName': 'CHOI', 'DRIVER_ID': 411567580, 'VEHICLE_ID': 'T652663C'}, '306': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'JUNPYO', 'LastName': 'LEE', 'DRIVER_ID': 459408897, 'VEHICLE_ID': 'T629746C'}, '300': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'CHANGHEE', 'LastName': 'JUNG', 'DRIVER_ID': 462984400, 'VEHICLE_ID': 'T725251C'}, '307': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'EUNCHUL', 'LastName': 'LEE', 'DRIVER_ID': 477024930, 'VEHICLE_ID': 'T647539C'}, '311': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'WILSON', 'LastName': 'DAMIANO', 'DRIVER_ID': 549135996, 'VEHICLE_ID': 'T705403C'}, '302': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DOHYO', 'LastName': 'HWANG', 'DRIVER_ID': 642332532, 'VEHICLE_ID': 'T754351C'}, '312': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'ANUP', 'LastName': 'GOMES', 'DRIVER_ID': 647711518, 'VEHICLE_ID': 'T724984C'}, '310': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'DIANA', 'LastName': 'RAMOS', 'DRIVER_ID': 845260458, 'VEHICLE_ID': 'T759153C'}, '303': {'Base': 'CHA CHA TRANSPORTATION CORP', 'FirstName': 'YOUNGBAE', 'LastName': 'KIM', 'DRIVER_ID': 883385323, 'VEHICLE_ID': 'T705993C'}}
-    # #
-    # look = LookBack_standard('NY minute Test/#1-01-01-2018 TO 05-30-2018 LOOK BACK.xlsx', 'NY minute Test/Roster-Export-01-02_2018 to 01-20_2018.txt', 'NY minute Test/Vendor-01-02-2018 to 01-10-2018.txt')
+    # info_locker.base_info = {'BaseName': 'NY Minute Car Svc, Inc (NYC)', 'BaseAddress': '2809 WEBSTER AVE\n', 'City': 'BRONX', 'State': 'NY', 'zipcode': '10458', 'ETIN': 'ARY7', 'NPI': '03850194', 'MedicaidProviderNum': '03851094', 'TaxID': '453369374', 'ContactName': 'SATHOSH THOMAS', 'ContactTel': '2017259798', 'LocationCode': '003'}
+    # info_locker.driver_information = {'#181': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'FRANKLIN', 'LastName': 'MEDRANO', 'DRIVER_ID': 127061367, 'VEHICLE_ID': 'T739991C'}, '#251': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLA', 'LastName': 'LOPEZ', 'DRIVER_ID': 166901208, 'VEHICLE_ID': 'T768251C'}, '#156': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ESTHER', 'LastName': 'PUENTE', 'DRIVER_ID': 171955252, 'VEHICLE_ID': 'T615563C'}, '#142': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ANGEL', 'LastName': 'VILLAR', 'DRIVER_ID': 212880845, 'VEHICLE_ID': 'T657516C'}, '#260': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'JANI', 'LastName': 'ROJAS', 'DRIVER_ID': 235618804, 'VEHICLE_ID': 'T768366C'}, '#158': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'GUZMAN', 'DRIVER_ID': 284798918, 'VEHICLE_ID': 'T757954C'}, '#216': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'MATOS', 'DRIVER_ID': 370424297, 'VEHICLE_ID': 'T735125C'}, '#241': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'ALMANZAR', 'DRIVER_ID': 453228738, 'VEHICLE_ID': 'T772168C'}, '#253': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARIAS', 'LastName': 'DEIBY', 'DRIVER_ID': 535435046, 'VEHICLE_ID': 'T749660C'}, '#324': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLOS', 'LastName': 'AVILA', 'DRIVER_ID': 620548879, 'VEHICLE_ID': 'T679971C'}, '#389': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ADRIANA', 'LastName': 'CONTRERAS', 'DRIVER_ID': 622212126, 'VEHICLE_ID': 'T691089C'}, '#139': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GUILLERMO', 'LastName': 'PAYANO', 'DRIVER_ID': 624143915, 'VEHICLE_ID': 'T723065C'}, '#311': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'AMBIORIX', 'LastName': 'PEREZ', 'DRIVER_ID': 668973114, 'VEHICLE_ID': 'T731144C'}, '#177': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GLEIDER', 'LastName': 'ESPINAL', 'DRIVER_ID': 672166762, 'VEHICLE_ID': 'T752532C'}, '#206': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'HENRY', 'LastName': 'MARTINEZ', 'DRIVER_ID': 757112367, 'VEHICLE_ID': 'T637928C'}, '#186': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARISTIDES', 'LastName': 'EUSTATE', 'DRIVER_ID': 766417031, 'VEHICLE_ID': 'T617606C'}, '#265': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'QUIROZ', 'DRIVER_ID': 784531671, 'VEHICLE_ID': 'T749821C'}, '#373': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALFRED', 'LastName': 'HUGER', 'DRIVER_ID': 813620708, 'VEHICLE_ID': 'T603357C'}, '#198': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'DALIA', 'LastName': 'FELICIANO', 'DRIVER_ID': 890708091, 'VEHICLE_ID': 'T731163C'}, '#203': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARGENIS', 'LastName': 'ROBLES', 'DRIVER_ID': 892656228, 'VEHICLE_ID': 'T731496C'}, '#214': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'EDGAR', 'LastName': 'YNFANTE', 'DRIVER_ID': 950900330, 'VEHICLE_ID': 'T672252C'}}
+
+
+    # look = LookBack_standard('NY minute Test/02-01-2018-05-02-2018 LOOK BACK.xlsx', 'NY minute Test/NY minute PA Roster 02-01-2018-05-02-2018 .xlsx', 'NY minute Test/NY minute Processed MAS 02-01-2018-2018-05-02.xlsx', read_from_processedMAS=True)
     # look.useFilesTo837()
 
 
