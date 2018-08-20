@@ -1,9 +1,9 @@
 '''
 
 @Author: Keyuan Wu
-@Update: 08/19/2018
+@Update: 08/20/2018
 
-DON'T ASK WHY! IT WORKS THOU!
+DON'T ASK WHY! IT WORKS! LMAO
 
 '''
 import pandas as pd
@@ -3493,7 +3493,7 @@ class window(QMainWindow):
         _versionLabel = QLabel(_version, self)
         _versionLabel.setFont(QFont("Roman times",10))
         _versionLabel.setToolTip('''
-        Copyright <2018> <Keyuan Wu>
+        Copyright <2018> <K. Wu>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
@@ -6941,17 +6941,17 @@ class LookBack_standard:
                     temp_dict['driver last name'] = info_locker.driver_information[driver_info_keys[random_idx]]['LastName']
 
                     for idx in idx_vendor_df:
+                        # print(self.MAS_vendor.at[idx, 'Code1'], self.MAS_vendor.at[idx, 'Code2'], self.MAS_vendor.at[idx, 'Code3'])
                         if self.MAS_vendor.at[idx, 'Code1'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code1'] + self.MAS_vendor.at[idx, 'Code1 Modifier']] += 1
 
-                        elif self.MAS_vendor.at[idx, 'Code2'] != "":
+                        if self.MAS_vendor.at[idx, 'Code2'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code2'] + self.MAS_vendor.at[idx, 'Code2 Modifier']] += 1
 
-                        elif self.MAS_vendor.at[idx, 'Code3'] != "":
+                        if self.MAS_vendor.at[idx, 'Code3'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code3'] + self.MAS_vendor.at[idx, 'Code3 Modifier']] += 1
 
-                        else:
-                            continue
+                        # print(code_dict)
 
                     threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
                     edi_temp_date = self.MAS_vendor.ix[idx_vendor_df[0], 'Service Starts']
@@ -6975,6 +6975,7 @@ class LookBack_standard:
                             '5': {'code': 'A0170', 'modifier': "CG", }
                         }
 
+                    # print(code_dict)
                     count = 1
                     total_amount = 0
                     for code in code_dict.keys():
@@ -7007,8 +7008,8 @@ class LookBack_standard:
                             total_amount += amount
 
                         elif code == 'S0215':
-                            unit = code_dict[code]
-                            amount = code_dict[code] * info_locker.decoding_info['2']['price']
+                            unit = sum([math.ceil(float(self.MAS_vendor.at[idx, 'Leg Mileage']) - 8) for idx in idx_vendor_df if float(self.MAS_vendor.at[idx, 'Leg Mileage']) > 8.0])
+                            amount = unit * info_locker.decoding_info['2']['price']
                             amount = float(format(amount, '.2f'))
 
                             temp_dict[code_position] = 'S0215'
@@ -7018,8 +7019,8 @@ class LookBack_standard:
                             total_amount += amount
 
                         elif code == 'S0215TN':
-                            unit = code_dict[code]
-                            amount = code_dict[code] * info_locker.decoding_info['3']['price']
+                            unit = sum([math.ceil(float(self.MAS_vendor.at[idx, 'Leg Mileage'])) for idx in idx_vendor_df])
+                            amount = unit * info_locker.decoding_info['3']['price']
                             amount = float(format(amount, '.2f'))
 
                             temp_dict[code_position] = 'S0215'
@@ -7193,7 +7194,7 @@ if __name__ == '__main__':
                     '''
     operr_billing = '''
       ______   .______    _______ .______      .______
-     /  __  \  |   _  \  |   ____||   _  \     |   _  \
+     /  __  \  |   _  \  |   ____||   _  \     |   _   |
     |  |  |  | |  |_)  | |  |__   |  |_)  |    |  |_)  |
     |  |  |  | |   ___/  |   __|  |      /     |      /
     |  `--'  | |  |      |  |____ |  |\  \----.|  |\  \----.
@@ -7225,15 +7226,15 @@ if __name__ == '__main__':
     '''
     operr_billing_smisome1 = '''
         ___       ___       ___       ___       ___
-       /\  \     /\  \     /\  \     /\  \     /\  \
-      /::\  \   /::\  \   /::\  \   /::\  \   /::\  \
+       /\  \     /\  \     /\  \     /\  \     /\  |
+      /::\  \   /::\  \   /::\  \   /::\  \   /::\  |
      /:/\:\__\ /::\:\__\ /::\:\__\ /::\:\__\ /::\:\__
      \:\/:/  / \/\::/  / \:\:\/  / \;:::/  / \;:::/  /
       \::/  /     \/__/   \:\/  /   |:\/__/   |:\/__/
        \/__/               \/__/     \|__|     \|__|
         ___       ___       ___       ___       ___       ___       ___
-       /\  \     /\  \     /\__\     /\__\     /\  \     /\__\     /\  \
-      /::\  \   _\:\  \   /:/  /    /:/  /    _\:\  \   /:| _|_   /::\  \
+       /\  \     /\  \     /\__\     /\__\     /\  \     /\__\     /\  |
+      /::\  \   _\:\  \   /:/  /    /:/  /    _\:\  \   /:| _|_   /::\  |
      /::\:\__\ /\/::\__\ /:/__/    /:/__/    /\/::\__\ /::|/\__\ /:/\:\__
      \:\::/  / \::/\/__/ \:\  \    \:\  \    \::/\/__/ \/|::/  / \:\:\/__/
       \::/  /   \:\__\    \:\__\    \:\__\    \:\__\     |:/  /   \::/  /
@@ -7294,10 +7295,10 @@ if __name__ == '__main__':
     '''
     operr_billing_dom = '''
      ___________ _________________  ______ _____ _      _     _____ _   _ _____
-    |  _  | ___ \  ___| ___ \ ___ \ | ___ \_   _| |    | |   |_   _| \ | |  __ \
+    |  _  | ___ \  ___| ___ \ ___ \ | ___ \_   _| |    | |   |_   _| \ | |  __ |
     | | | | |_/ / |__ | |_/ / |_/ / | |_/ / | | | |    | |     | | |  \| | |  \/
     | | | |  __/|  __||    /|    /  | ___ \ | | | |    | |     | | | . ` | | __
-    \ \_/ / |   | |___| |\ \| |\ \  | |_/ /_| |_| |____| |_____| |_| |\  | |_\ \
+    \ \_/ / |   | |___| |\ \| |\ \  | |_/ /_| |_| |____| |_____| |_| |\  | |_\ |
      \___/\_|   \____/\_| \_\_| \_| \____/ \___/\_____/\_____/\___/\_| \_/\____/
     '''
     operr_billing_gra = '''
@@ -7315,11 +7316,12 @@ if __name__ == '__main__':
             \/            \/       \/           \/        \/
     '''
 
-    fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
-    fig_list = np.random.permutation(fig_list)
-    _version = "0.8.19"
+    fig_list = [operr_billing, operr_billing3_D, operr_billing_smisome1, operr_billing_3d, operr_billing_dom]
+    random_idx = np.random.randint(0, len(fig_list)-1)
+    _version = "0.8.20"
 
-    print(fig_list[0])
+
+    print(fig_list[random_idx])
     print('\n')
     print(f'OPERR BILLING VERISON: {_version}')
 
