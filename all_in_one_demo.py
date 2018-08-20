@@ -1,9 +1,9 @@
 '''
 
 @Author: Keyuan Wu
-@Update: 08/19/2018
+@Update: 08/20/2018
 
-DON'T ASK WHY! IT WORKS THOU!
+DON'T ASK WHY! IT WORKS! LMAO
 
 '''
 import pandas as pd
@@ -3493,23 +3493,23 @@ class window(QMainWindow):
         _versionLabel = QLabel(_version, self)
         _versionLabel.setFont(QFont("Roman times",10))
         _versionLabel.setToolTip('''
-        Copyright <2018> <Keyuan Wu>
+        Copyright <2018> <K. Wu>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
-without restriction, including without limitation the rights to use, copy, modify, 
-merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject to the following 
+without restriction, including without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following
 conditions:
 
-The above copyright notice and this permission notice shall be included in all copies 
+The above copyright notice and this permission notice shall be included in all copies
 or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
 PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-WHETHER IN AN ACTION OF CONTRACT, TORT OROTHERWISE, ARISING FROM, OUT OF OR IN 
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OROTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.''')
         _versionLabel.move(5120, 2880)
 
@@ -5370,13 +5370,22 @@ class subwindow_lookback(QMainWindow):
 
             self.tabs = QTabWidget()
             self.tab1 = QWidget()
+            self.tab2 = QWidget()
             self.tabs.addTab(self.tab1, 'Look Back')
+            self.tabs.addTab(self.tab2, 'Standard LookBack')
 
             self.file_name1 = None
             self.file_name2 = None
             self.file_name3 = None
 
+            self.file_name_tab2_1 = None
+            self.file_name_tab2_2 = None
+            self.file_name_tab2_3 = None
+
+            self.read_from_processed_MAS = False
+
             self.mytab1()
+            self.mytab2()
 
             self.layout.addWidget(self.tabs)
             self.setLayout(self.layout)
@@ -5384,8 +5393,11 @@ class subwindow_lookback(QMainWindow):
         def mytab1(self):
             self.tab1.layout = QGridLayout()
             nameLabel1 = QLabel('Epaces PA:')
+            nameLabel1.setFont(QFont('Apple Chancery'))
             nameLabel2 = QLabel('MAS PA:')
+            nameLabel2.setFont(QFont('Apple Chancery'))
             nameLabel3 = QLabel('MAS Vendor:')
+            nameLabel3.setFont(QFont('Apple Chancery'))
 
             self.textbox1 = QLineEdit()
             self.textbox2 = QLineEdit()
@@ -5419,6 +5431,53 @@ class subwindow_lookback(QMainWindow):
 
             self.tab1.setLayout(self.tab1.layout)
 
+        def mytab2(self):
+            self.tab2.layout = QGridLayout()
+            nameLabel1 = QLabel('PA (from 3rd Party):')
+            nameLabel1.setFont(QFont('Apple Chancery'))
+            nameLabel2 = QLabel('MAS PA:')
+            nameLabel2.setFont(QFont('Apple Chancery'))
+            nameLabel3 = QLabel('MAS Vendor:')
+            nameLabel3.setFont(QFont('Apple Chancery'))
+
+            self.textbox_tab2_1 = QLineEdit()
+            self.textbox_tab2_2 = QLineEdit()
+            self.textbox_tab2_3 = QLineEdit()
+
+            self.btnSelect_tab2_1 = QPushButton('...')
+            self.btnSelect_tab2_1.clicked.connect(self.selectFile_tab2_1)
+
+            self.btnSelect_tab2_2 = QPushButton('...')
+            self.btnSelect_tab2_2.clicked.connect(self.selectFile_tab2_2)
+
+            self.btnSelect_tab2_3 = QPushButton('...')
+            self.btnSelect_tab2_3.clicked.connect(self.selectFile_tab2_3)
+
+            self.btnRun2 = QPushButton('Run')
+            self.btnRun2.clicked.connect(self.standard_lookback)
+
+            self.checkbox = QCheckBox('Read From Processed MAS?', self)
+            self.checkbox.setFont(QFont('Apple Chancery'))
+            self.checkbox.stateChanged.connect(self.switchReadFromProcessedMAS)
+
+            self.tab2.layout.addWidget(nameLabel1, 0, 0)
+            self.tab2.layout.addWidget(self.textbox_tab2_1, 0, 1)
+            self.tab2.layout.addWidget(self.btnSelect_tab2_1, 0, 2)
+
+            self.tab2.layout.addWidget(nameLabel2, 1, 0)
+            self.tab2.layout.addWidget(self.textbox_tab2_2, 1, 1)
+            self.tab2.layout.addWidget(self.btnSelect_tab2_2, 1, 2)
+
+            self.tab2.layout.addWidget(nameLabel3, 2, 0)
+            self.tab2.layout.addWidget(self.textbox_tab2_3, 2, 1)
+            self.tab2.layout.addWidget(self.btnSelect_tab2_3, 2, 2)
+
+            self.tab2.layout.addWidget(self.checkbox, 3, 0)
+
+            self.tab2.layout.addWidget(self.btnRun2, 4, 2)
+            self.tab2.setLayout(self.tab2.layout)
+
+
         def selectFile1(self):
             self.file_name1, _ = QFileDialog.getOpenFileName(self, 'Select File',
                                                                options=QFileDialog.DontUseNativeDialog)
@@ -5434,6 +5493,21 @@ class subwindow_lookback(QMainWindow):
                                                                options=QFileDialog.DontUseNativeDialog)
             self.textbox3.setText(self.file_name3)
 
+        def selectFile_tab2_1(self):
+            self.file_name_tab2_1, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox_tab2_1.setText(self.file_name_tab2_1)
+
+        def selectFile_tab2_2(self):
+            self.file_name_tab2_2, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox_tab2_2.setText(self.file_name_tab2_2)
+
+        def selectFile_tab2_3(self):
+            self.file_name_tab2_3, _ = QFileDialog.getOpenFileName(self, 'Select File',
+                                                               options=QFileDialog.DontUseNativeDialog)
+            self.textbox_tab2_3.setText(self.file_name_tab2_3)
+
         def lookback(self):
             choice = QMessageBox.question(self, 'Message', 'Are you sure to process?',
                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -5447,6 +5521,26 @@ class subwindow_lookback(QMainWindow):
                 else:
                     QMessageBox.about(self, 'Message', 'Missing File!')
 
+            else:
+                pass
+
+        def switchReadFromProcessedMAS(self, state):
+            if state == Qt.Checked:
+                self.read_from_processed_MAS = True
+            else:
+                self.read_from_processed_MAS = False
+
+        def standard_lookback(self):
+            choice = QMessageBox.question(self, 'Message', 'Are you sure to process?',
+                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+            if choice == QMessageBox.Yes:
+                if self.file_name_tab2_1 and self.file_name_tab2_2 and self.file_name_tab2_3:
+                    l = LookBack_standard(PA=self.file_name_tab2_1, MAS_PA=self.file_name_tab2_2, MAS_vendor=self.file_name_tab2_3, read_from_processedMAS=self.read_from_processed_MAS)
+                    l.useFilesTo837()
+                    QMessageBox.about(self, 'Message', 'Look Back completed!')
+                else:
+                    QMessageBox.about(self, 'Message', 'Missing File!')
             else:
                 pass
 
@@ -6258,7 +6352,7 @@ class mysqlite:
         self.cursor.execute(f'SELECT UpdateDate, CIN FROM {table}')
         response = self.cursor.fetchall()
         current_month = arrow.now().date().month
-        
+
         for res in response:
             date, cin = res
             month_of_date = arrow.get(date).date().month
@@ -6714,6 +6808,7 @@ class LookBack:
         edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
+
 # Standard Lookback. Given PA numbers from other bases, we can find invoice numbers in MAS PA roster, then use invoice
 # numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P).
 class LookBack_standard:
@@ -6846,17 +6941,17 @@ class LookBack_standard:
                     temp_dict['driver last name'] = info_locker.driver_information[driver_info_keys[random_idx]]['LastName']
 
                     for idx in idx_vendor_df:
+                        # print(self.MAS_vendor.at[idx, 'Code1'], self.MAS_vendor.at[idx, 'Code2'], self.MAS_vendor.at[idx, 'Code3'])
                         if self.MAS_vendor.at[idx, 'Code1'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code1'] + self.MAS_vendor.at[idx, 'Code1 Modifier']] += 1
 
-                        elif self.MAS_vendor.at[idx, 'Code2'] != "":
+                        if self.MAS_vendor.at[idx, 'Code2'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code2'] + self.MAS_vendor.at[idx, 'Code2 Modifier']] += 1
 
-                        elif self.MAS_vendor.at[idx, 'Code3'] != "":
+                        if self.MAS_vendor.at[idx, 'Code3'] != "":
                             code_dict[self.MAS_vendor.at[idx, 'Code3'] + self.MAS_vendor.at[idx, 'Code3 Modifier']] += 1
 
-                        else:
-                            continue
+                        # print(code_dict)
 
                     threshhold_date = arrow.get('12/31/2017', 'MM/DD/YYYY').date()
                     edi_temp_date = self.MAS_vendor.ix[idx_vendor_df[0], 'Service Starts']
@@ -6880,6 +6975,7 @@ class LookBack_standard:
                             '5': {'code': 'A0170', 'modifier': "CG", }
                         }
 
+                    # print(code_dict)
                     count = 1
                     total_amount = 0
                     for code in code_dict.keys():
@@ -6912,8 +7008,8 @@ class LookBack_standard:
                             total_amount += amount
 
                         elif code == 'S0215':
-                            unit = code_dict[code]
-                            amount = code_dict[code] * info_locker.decoding_info['2']['price']
+                            unit = sum([math.ceil(float(self.MAS_vendor.at[idx, 'Leg Mileage']) - 8) for idx in idx_vendor_df if float(self.MAS_vendor.at[idx, 'Leg Mileage']) > 8.0])
+                            amount = unit * info_locker.decoding_info['2']['price']
                             amount = float(format(amount, '.2f'))
 
                             temp_dict[code_position] = 'S0215'
@@ -6923,8 +7019,8 @@ class LookBack_standard:
                             total_amount += amount
 
                         elif code == 'S0215TN':
-                            unit = code_dict[code]
-                            amount = code_dict[code] * info_locker.decoding_info['3']['price']
+                            unit = sum([math.ceil(float(self.MAS_vendor.at[idx, 'Leg Mileage'])) for idx in idx_vendor_df])
+                            amount = unit * info_locker.decoding_info['3']['price']
                             amount = float(format(amount, '.2f'))
 
                             temp_dict[code_position] = 'S0215'
@@ -6966,8 +7062,6 @@ class LookBack_standard:
         missed_df.to_excel(os.path.join(file_saving_path, 'Missing Trips.xlsx'), index=False)
         edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
-
-
 
 
 if __name__ == '__main__':
@@ -7099,18 +7193,18 @@ if __name__ == '__main__':
                     (vvv(VVV)(VVV)vvv)
                     '''
     operr_billing = '''
-      ______   .______    _______ .______      .______      
-     /  __  \  |   _  \  |   ____||   _  \     |   _  \     
-    |  |  |  | |  |_)  | |  |__   |  |_)  |    |  |_)  |    
-    |  |  |  | |   ___/  |   __|  |      /     |      /     
+      ______   .______    _______ .______      .______
+     /  __  \  |   _  \  |   ____||   _  \     |   _   |
+    |  |  |  | |  |_)  | |  |__   |  |_)  |    |  |_)  |
+    |  |  |  | |   ___/  |   __|  |      /     |      /
     |  `--'  | |  |      |  |____ |  |\  \----.|  |\  \----.
      \______/  | _|      |_______|| _| `._____|| _| `._____|
-                                                            
-    .______    __   __       __       __  .__   __.   _______ 
+
+    .______    __   __       __       __  .__   __.   _______
     |   _  \  |  | |  |     |  |     |  | |  \ |  |  /  _____|
-    |  |_)  | |  | |  |     |  |     |  | |   \|  | |  |  __  
-    |   _  <  |  | |  |     |  |     |  | |  . `  | |  | |_ | 
-    |  |_)  | |  | |  `----.|  `----.|  | |  |\   | |  |__| | 
+    |  |_)  | |  | |  |     |  |     |  | |   \|  | |  |  __
+    |   _  <  |  | |  |     |  |     |  | |  . `  | |  | |_ |
+    |  |_)  | |  | |  `----.|  `----.|  | |  |\   | |  |__| |
     |______/  |__| |_______||_______||__| |__| \__|  \______| '''
     operr_billing3_D = '''
     :'#######::'########::'########:'########::'########::
@@ -7131,102 +7225,103 @@ if __name__ == '__main__':
     ........:::....::........::........::....::..::::..:::......::::
     '''
     operr_billing_smisome1 = '''
-        ___       ___       ___       ___       ___   
-       /\  \     /\  \     /\  \     /\  \     /\  \  
-      /::\  \   /::\  \   /::\  \   /::\  \   /::\  \ 
+        ___       ___       ___       ___       ___
+       /\  \     /\  \     /\  \     /\  \     /\  |
+      /::\  \   /::\  \   /::\  \   /::\  \   /::\  |
      /:/\:\__\ /::\:\__\ /::\:\__\ /::\:\__\ /::\:\__
      \:\/:/  / \/\::/  / \:\:\/  / \;:::/  / \;:::/  /
-      \::/  /     \/__/   \:\/  /   |:\/__/   |:\/__/ 
-       \/__/               \/__/     \|__|     \|__|  
-        ___       ___       ___       ___       ___       ___       ___   
-       /\  \     /\  \     /\__\     /\__\     /\  \     /\__\     /\  \  
-      /::\  \   _\:\  \   /:/  /    /:/  /    _\:\  \   /:| _|_   /::\  \ 
+      \::/  /     \/__/   \:\/  /   |:\/__/   |:\/__/
+       \/__/               \/__/     \|__|     \|__|
+        ___       ___       ___       ___       ___       ___       ___
+       /\  \     /\  \     /\__\     /\__\     /\  \     /\__\     /\  |
+      /::\  \   _\:\  \   /:/  /    /:/  /    _\:\  \   /:| _|_   /::\  |
      /::\:\__\ /\/::\__\ /:/__/    /:/__/    /\/::\__\ /::|/\__\ /:/\:\__
      \:\::/  / \::/\/__/ \:\  \    \:\  \    \::/\/__/ \/|::/  / \:\:\/__/
-      \::/  /   \:\__\    \:\__\    \:\__\    \:\__\     |:/  /   \::/  / 
+      \::/  /   \:\__\    \:\__\    \:\__\    \:\__\     |:/  /   \::/  /
        \/__/     \/__/     \/__/     \/__/     \/__/     \/__/     \/__/  '''
     operr_billing_3d = '''
-       *******   *******  ******** *******   *******  
-      **/////** /**////**/**///// /**////** /**////** 
-     **     //**/**   /**/**      /**   /** /**   /** 
-    /**      /**/******* /******* /*******  /*******  
-    /**      /**/**////  /**////  /**///**  /**///**  
-    //**     ** /**      /**      /**  //** /**  //** 
+       *******   *******  ******** *******   *******
+      **/////** /**////**/**///// /**////** /**////**
+     **     //**/**   /**/**      /**   /** /**   /**
+    /**      /**/******* /******* /*******  /*******
+    /**      /**/**////  /**////  /**///**  /**///**
+    //**     ** /**      /**      /**  //** /**  //**
      //*******  /**      /********/**   //**/**   //**
-      ///////   //       //////// //     // //     // 
-     ******   ** **       **       ** ****     **   ******** 
+      ///////   //       //////// //     // //     //
+     ******   ** **       **       ** ****     **   ********
     /*////** /**/**      /**      /**/**/**   /**  **//////**
-    /*   /** /**/**      /**      /**/**//**  /** **      // 
-    /******  /**/**      /**      /**/** //** /**/**         
+    /*   /** /**/**      /**      /**/**//**  /** **      //
+    /******  /**/**      /**      /**/** //** /**/**
     /*//// **/**/**      /**      /**/**  //**/**/**    *****
     /*    /**/**/**      /**      /**/**   //****//**  ////**
-    /******* /**/********/********/**/**    //*** //******** 
-    ///////  // //////// //////// // //      ///   //////// 
+    /******* /**/********/********/**/**    //*** //********
+    ///////  // //////// //////// // //      ///   ////////
     '''
     operr_billing_gothic = '''
-        __                                         
-      ,-||-,   -__ /\\    ,- _~, -__ /\   -__ /\   
-     ('|||  )    ||  \\  (' /| /   || \,    || \,  
-    (( |||--))  /||__|| ((  ||/=  /|| /    /|| /   
-    (( |||--))  \||__|| ((  ||    \||/-    \||/-   
-     ( / |  )    ||  |,  ( / |     ||  \    ||  \  
-      -____-   _-||-_/    -____- _---_-|, _---_-|, 
-                 ||                                
-                                                   
-                                            __       __ ,  
-    _-_ _,,   _-_, _-_-    _-_-    _-_,    /  -,   ,-| ~   
-       -/  )    //  /,      /,       //   ||   )  ('||/__, 
-      ~||_<     ||  ||      ||       ||  ~||---) (( |||  | 
-       || \\   ~|| ~||     ~||      ~||  ~||---, (( |||==| 
-       ,/--||   ||  ||      ||       ||  ~||  /   ( / |  , 
-      _--_-'  _-_, (  -__, (  -__, _-_,   |, /     -____/  
-     (                                  -_-  --~           
+        __
+      ,-||-,   -__ /\\    ,- _~, -__ /\   -__ /\
+     ('|||  )    ||  \\  (' /| /   || \,    || \,
+    (( |||--))  /||__|| ((  ||/=  /|| /    /|| /
+    (( |||--))  \||__|| ((  ||    \||/-    \||/-
+     ( / |  )    ||  |,  ( / |     ||  \    ||  \
+      -____-   _-||-_/    -____- _---_-|, _---_-|,
+                 ||
+
+                                            __       __ ,
+    _-_ _,,   _-_, _-_-    _-_-    _-_,    /  -,   ,-| ~
+       -/  )    //  /,      /,       //   ||   )  ('||/__,
+      ~||_<     ||  ||      ||       ||  ~||---) (( |||  |
+       || \\   ~|| ~||     ~||      ~||  ~||---, (( |||==|
+       ,/--||   ||  ||      ||       ||  ~||  /   ( / |  ,
+      _--_-'  _-_, (  -__, (  -__, _-_,   |, /     -____/
+     (                                  -_-  --~
                                                    '''
     operr_billing_coinstk = '''
-        O))))     O)))))))  O))))))))O)))))))    O)))))))    
-      O))    O))  O))    O))O))      O))    O))  O))    O))  
-    O))        O))O))    O))O))      O))    O))  O))    O))  
-    O))        O))O)))))))  O))))))  O) O))      O) O))      
-    O))        O))O))       O))      O))  O))    O))  O))    
-      O))     O)) O))       O))      O))    O))  O))    O))  
+        O))))     O)))))))  O))))))))O)))))))    O)))))))
+      O))    O))  O))    O))O))      O))    O))  O))    O))
+    O))        O))O))    O))O))      O))    O))  O))    O))
+    O))        O))O)))))))  O))))))  O) O))      O) O))
+    O))        O))O))       O))      O))  O))    O))  O))
+      O))     O)) O))       O))      O))    O))  O))    O))
         O))))     O))       O))))))))O))      O))O))      O))
-                                                             
-    O)) O))   O))O))      O))      O))O)))     O))   O))))   
-    O)    O)) O))O))      O))      O))O) O))   O)) O)    O)) 
-    O)     O))O))O))      O))      O))O)) O))  O))O))        
-    O))) O)   O))O))      O))      O))O))  O)) O))O))        
+
+    O)) O))   O))O))      O))      O))O)))     O))   O))))
+    O)    O)) O))O))      O))      O))O) O))   O)) O)    O))
+    O)     O))O))O))      O))      O))O)) O))  O))O))
+    O))) O)   O))O))      O))      O))O))  O)) O))O))
     O)     O))O))O))      O))      O))O))   O) O))O))   O))))
-    O)      O)O))O))      O))      O))O))    O) )) O))    O) 
-    O)))) O)) O))O))))))))O))))))))O))O))      O))  O))))) 
+    O)      O)O))O))      O))      O))O))    O) )) O))    O)
+    O)))) O)) O))O))))))))O))))))))O))O))      O))  O)))))
     '''
     operr_billing_dom = '''
-     ___________ _________________  ______ _____ _      _     _____ _   _ _____ 
-    |  _  | ___ \  ___| ___ \ ___ \ | ___ \_   _| |    | |   |_   _| \ | |  __ \
+     ___________ _________________  ______ _____ _      _     _____ _   _ _____
+    |  _  | ___ \  ___| ___ \ ___ \ | ___ \_   _| |    | |   |_   _| \ | |  __ |
     | | | | |_/ / |__ | |_/ / |_/ / | |_/ / | | | |    | |     | | |  \| | |  \/
-    | | | |  __/|  __||    /|    /  | ___ \ | | | |    | |     | | | . ` | | __ 
-    \ \_/ / |   | |___| |\ \| |\ \  | |_/ /_| |_| |____| |_____| |_| |\  | |_\ \
+    | | | |  __/|  __||    /|    /  | ___ \ | | | |    | |     | | | . ` | | __
+    \ \_/ / |   | |___| |\ \| |\ \  | |_/ /_| |_| |____| |_____| |_| |\  | |_\ |
      \___/\_|   \____/\_| \_\_| \_| \____/ \___/\_____/\_____/\___/\_| \_/\____/
     '''
     operr_billing_gra = '''
-    ________ _________________________________________ 
+    ________ _________________________________________
     \_____  \______   \_   _____/\______   \______    \
      /   |   \|     ___/|    __)_  |       _/|       _/
     /    |    \    |    |        \ |    |   \|    |   \
     \_______  /____|   /_______  / |____|_  /|____|_  /
-            \/                 \/         \/        \/ 
-    __________.___.____    .____    .___ _______    ________ 
-    \______   \   |    |   |    |   |   |\      \  /  _____/ 
-     |    |  _/   |    |   |    |   |   |/   |   \/   \  ___ 
+            \/                 \/         \/        \/
+    __________.___.____    .____    .___ _______    ________
+    \______   \   |    |   |    |   |   |\      \  /  _____/
+     |    |  _/   |    |   |    |   |   |/   |   \/   \  ___
      |    |   \   |    |___|    |___|   /    |    \    \_\  \
      |______  /___|_______ \_______ \___\____|__  /\______  /
-            \/            \/       \/           \/        \/ 
+            \/            \/       \/           \/        \/
     '''
 
-    fig_list = [operr_billing, operr_billing3_D, operr_billing_gothic, operr_billing_smisome1, operr_billing_3d]
-    fig_list = np.random.permutation(fig_list)
-    _version = "0.8.19"
+    fig_list = [operr_billing, operr_billing3_D, operr_billing_smisome1, operr_billing_3d, operr_billing_dom]
+    random_idx = np.random.randint(0, len(fig_list)-1)
+    _version = "0.8.20"
 
-    print(fig_list[0])
+
+    print(fig_list[random_idx])
     print('\n')
     print(f'OPERR BILLING VERISON: {_version}')
 
@@ -7238,14 +7333,6 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-    # info_locker.base_info = {'BaseName': 'NY Minute Car Svc, Inc (NYC)', 'BaseAddress': '2809 WEBSTER AVE\n', 'City': 'BRONX', 'State': 'NY', 'zipcode': '10458', 'ETIN': 'ARY7', 'NPI': '03850194', 'MedicaidProviderNum': '03851094', 'TaxID': '453369374', 'ContactName': 'SATHOSH THOMAS', 'ContactTel': '2017259798', 'LocationCode': '003'}
-    # info_locker.driver_information = {'#181': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'FRANKLIN', 'LastName': 'MEDRANO', 'DRIVER_ID': 127061367, 'VEHICLE_ID': 'T739991C'}, '#251': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLA', 'LastName': 'LOPEZ', 'DRIVER_ID': 166901208, 'VEHICLE_ID': 'T768251C'}, '#156': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ESTHER', 'LastName': 'PUENTE', 'DRIVER_ID': 171955252, 'VEHICLE_ID': 'T615563C'}, '#142': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ANGEL', 'LastName': 'VILLAR', 'DRIVER_ID': 212880845, 'VEHICLE_ID': 'T657516C'}, '#260': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'JANI', 'LastName': 'ROJAS', 'DRIVER_ID': 235618804, 'VEHICLE_ID': 'T768366C'}, '#158': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'GUZMAN', 'DRIVER_ID': 284798918, 'VEHICLE_ID': 'T757954C'}, '#216': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALEXANDER', 'LastName': 'MATOS', 'DRIVER_ID': 370424297, 'VEHICLE_ID': 'T735125C'}, '#241': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'ALMANZAR', 'DRIVER_ID': 453228738, 'VEHICLE_ID': 'T772168C'}, '#253': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARIAS', 'LastName': 'DEIBY', 'DRIVER_ID': 535435046, 'VEHICLE_ID': 'T749660C'}, '#324': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'CARLOS', 'LastName': 'AVILA', 'DRIVER_ID': 620548879, 'VEHICLE_ID': 'T679971C'}, '#389': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ADRIANA', 'LastName': 'CONTRERAS', 'DRIVER_ID': 622212126, 'VEHICLE_ID': 'T691089C'}, '#139': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GUILLERMO', 'LastName': 'PAYANO', 'DRIVER_ID': 624143915, 'VEHICLE_ID': 'T723065C'}, '#311': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'AMBIORIX', 'LastName': 'PEREZ', 'DRIVER_ID': 668973114, 'VEHICLE_ID': 'T731144C'}, '#177': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'GLEIDER', 'LastName': 'ESPINAL', 'DRIVER_ID': 672166762, 'VEHICLE_ID': 'T752532C'}, '#206': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'HENRY', 'LastName': 'MARTINEZ', 'DRIVER_ID': 757112367, 'VEHICLE_ID': 'T637928C'}, '#186': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARISTIDES', 'LastName': 'EUSTATE', 'DRIVER_ID': 766417031, 'VEHICLE_ID': 'T617606C'}, '#265': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ELVIN', 'LastName': 'QUIROZ', 'DRIVER_ID': 784531671, 'VEHICLE_ID': 'T749821C'}, '#373': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ALFRED', 'LastName': 'HUGER', 'DRIVER_ID': 813620708, 'VEHICLE_ID': 'T603357C'}, '#198': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'DALIA', 'LastName': 'FELICIANO', 'DRIVER_ID': 890708091, 'VEHICLE_ID': 'T731163C'}, '#203': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'ARGENIS', 'LastName': 'ROBLES', 'DRIVER_ID': 892656228, 'VEHICLE_ID': 'T731496C'}, '#214': {'Base': 'NY Minute Car Svc, Inc (NYC)', 'FirstName': 'EDGAR', 'LastName': 'YNFANTE', 'DRIVER_ID': 950900330, 'VEHICLE_ID': 'T672252C'}}
-
 
     # look = LookBack_standard('NY minute Test/02-01-2018-05-02-2018 LOOK BACK.xlsx', 'NY minute Test/NY minute PA Roster 02-01-2018-05-02-2018 .xlsx', 'NY minute Test/NY minute Processed MAS 02-01-2018-2018-05-02.xlsx', read_from_processedMAS=True)
     # look.useFilesTo837()
-
-
-
-
-
