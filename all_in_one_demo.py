@@ -1311,7 +1311,6 @@ class SignoffAndCompare:
 
         return sign_off_df
 
-
     #Compare Sign Off File and PA Roster, Get 837P without PA#, Get the MAS Correction File, Get MAS Correction File (Excel) for Check Payment, Get 837P - 1 Data file (Excel)
     def compare_signoff_PA(self, signoff, pa_file, tofile=False, to837=False, mas_2=None):
         '''
@@ -1972,7 +1971,6 @@ class SignoffAndCompare:
                                 index=False)
 
         return result_df
-
 
    # Check Payment File(Excel) For checking the payment
     def new_compare_after_payment(self, signoff_compare_PA_file, payment_raw_file, edi_837P_file=None):
@@ -3382,7 +3380,7 @@ class Process_Method:
         expect_amount_value = sum(result['Expected Amount'].tolist())
         paid_amount_value = sum(result['Paid Amount'].tolist())
 
-        last_line = len(result) + 5
+        last_line = len(invoice_number) + 5
         result.ix[last_line, 'Claim Number'] = 'Total:'
 
         # print(expect_amount_value, paid_amount_value)
@@ -3394,7 +3392,7 @@ class Process_Method:
         result.ix[last_line+1, 'Claim Number'] = 'Payment Date:'
         result.ix[last_line + 1, 'Expected Amount'] = payment_date
 
-        file_name_835= str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+        file_name_835 = str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
 
         current_path = os.getcwd()
         daily_folder = str(datetime.today().date())
@@ -4999,7 +4997,7 @@ class subwindow_addbase(QMainWindow):
             nameLabel12 = QLabel('Location Code:')
 
             nameLabel13 = QLabel('- Delete Base -')
-            nameLabel14 = QLabel('NPI:')
+            nameLabel14 = QLabel('ETIN:')
 
             self.textbox1 = QLineEdit()
             self.textbox2 = QLineEdit()
@@ -5078,6 +5076,8 @@ class subwindow_addbase(QMainWindow):
             self.tab2_textbox2 = QLineEdit()
             btnAddUpdate = QPushButton('Add/Update')
             btnAddUpdate.clicked.connect(self.addUpdateKey)
+            btnShow = QPushButton('Show')
+            btnShow.clicked.connect(self.showBaseApi)
 
             self.tab2.layout.addWidget(nameLabel1, 0, 0)
             self.tab2.layout.addWidget(self.base_combobox, 0, 1)
@@ -5086,6 +5086,7 @@ class subwindow_addbase(QMainWindow):
             self.tab2.layout.addWidget(nameLabel3, 2, 0)
             self.tab2.layout.addWidget(self.tab2_textbox2, 2, 1)
             self.tab2.layout.addWidget(btnAddUpdate, 3, 1)
+            self.tab2.layout.addWidget(btnShow, 3, 0)
 
             self.tab2.setLayout(self.tab2.layout)
 
@@ -5103,23 +5104,29 @@ class subwindow_addbase(QMainWindow):
             contacttel = self.textbox11.text()
             locationcode = self.textbox12.text()
 
-            if not basename or not baseaddress or not city or not state or not zipcode or not etin or not npi or not medicaid_providerNum or not taxid or not contactname or not contacttel or not locationcode:
-                QMessageBox.about(self, 'Message', 'All fields are required!')
+            if not basename or not baseaddress or not city or not state or not zipcode or not etin or not medicaid_providerNum or not taxid or not contactname or not contacttel or not locationcode:
+                QMessageBox.about(self, 'Message', 'All fields are required! (Except NPI)')
             else:
+                if not npi:
+                    npi = 'NA'
                 SQ = mysqlite('EDI.db')
                 SQ.upsert_newbase(table='AllBases', basename=basename, baseaddress=baseaddress, city=city, state=state, zipcode=zipcode, etin=etin, npi=npi,
                                   medicaid_provider_num=medicaid_providerNum, taxid=taxid, contactname=contactname, contactTel=contacttel, locationcode=locationcode)
                 QMessageBox.about(self, 'Message', 'New base {0} are added!'.format(basename))
 
         def deleteBase(self):
-            npi = self.textbox13.text()
+            etin = self.textbox13.text()
             SQ = mysqlite('EDI.db')
-            SQ.delete_newbase(table='AllBases', npi=npi)
-            QMessageBox.about(self, 'Message', 'Base {0} are deleted!'.format(npi))
+            SQ.delete_newbase(table='AllBases', etin=etin)
+            QMessageBox.about(self, 'Message', 'Base {0} are deleted!'.format(etin))
 
         def showbase(self):
             self.show_new_base = subwindow_ShowNewBase()
             self.show_new_base.show()
+
+        def showBaseApi(self):
+            self.show_base_api = subwindow_ShowBaseApi()
+            self.show_base_api.show()
 
         def addUpdateKey(self):
             SQ = mysqlite('EDI.db')
@@ -5134,7 +5141,7 @@ class subwindow_addbase(QMainWindow):
 
             if basename in only_basenames_in_keybase and agency in only_agency_in_keybase:
                 #update
-                SQ.update_base_api_key(table='BaseApiKey', agency=agency, api_key=api_key)
+                SQ.update_base_api_key(table='BaseApiKey', agency=agency, api_key=api_key, base=basename)
                 QMessageBox.about(self, 'Message', 'API Key updated!')
             else:
                 #upsert
@@ -5166,6 +5173,34 @@ class subwindow_ShowNewBase(QMainWindow):
     def home(self):
         SQ = mysqlite('EDI.db')
         data = SQ.get_data_from_271_plancode('AllBases')
+
+        self.tableWidget = QTableWidget(self)
+        countRow = data.__len__()
+        countCol = data.shape[1]
+        headers = data.columns.tolist()
+        self.tableWidget.setRowCount(countRow)
+        self.tableWidget.setColumnCount(countCol)
+        for r in range(countRow):
+            for c in range(countCol):
+                self.tableWidget.setItem(r, c, QTableWidgetItem(str(data.ix[r, c])))
+
+        self.tableWidget.setHorizontalHeaderLabels(headers)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+        self.tableWidget.move(0, 0)
+        self.tableWidget.resize(750, 400)
+
+
+class subwindow_ShowBaseApi(QMainWindow):
+    def __init__(self):
+        super(subwindow_ShowBaseApi, self).__init__()
+        self.setGeometry(600, 600, 750, 400)
+        self.setWindowTitle('EDI')
+        self.home()
+
+    def home(self):
+        SQ = mysqlite('EDI.db')
+        data = SQ.get_data_from_271_plancode('BaseApiKey')
 
         self.tableWidget = QTableWidget(self)
         countRow = data.__len__()
@@ -6432,7 +6467,7 @@ class mysqlite:
         self.conn.commit()
 
     def create_table_for_addbase(self, table):
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}(BaseName TEXT, BaseAddress TEXT, City TEXT, State TEXT, zipcode TEXT, ETIN TEXT, NPI TEXT, MedicaidProviderNum TEXT, TaxID TEXT, ContactName TEXT, ContactTel TEXT, LocationCode TEXT, PRIMARY KEY(NPI))'.format(table))
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}(BaseName TEXT, BaseAddress TEXT, City TEXT, State TEXT, zipcode TEXT, ETIN TEXT, NPI TEXT, MedicaidProviderNum TEXT, TaxID TEXT, ContactName TEXT, ContactTel TEXT, LocationCode TEXT, PRIMARY KEY(ETIN))'.format(table))
 
     def upsert_newbase(self, table, basename, baseaddress, city, state, zipcode, etin, npi, medicaid_provider_num, taxid, contactname, contactTel, locationcode):
         self.create_table_for_addbase(table)
@@ -6440,8 +6475,8 @@ class mysqlite:
                             (basename, baseaddress.upper(), city.upper(), state, zipcode, etin, npi, medicaid_provider_num, taxid, contactname.upper(), contactTel, locationcode))
         self.conn.commit()
 
-    def delete_newbase(self, table, npi):
-        self.cursor.execute('DELETE FROM {0} WHERE NPI="{1}"'.format(table, npi))
+    def delete_newbase(self, table, etin):
+        self.cursor.execute('DELETE FROM {0} WHERE ETIN="{1}"'.format(table, etin))
         self.conn.commit()
 
     def create_table_for_driver(self, table):
@@ -7323,7 +7358,7 @@ if __name__ == '__main__':
 
     print(fig_list[random_idx])
     print('\n')
-    print(f'OPERR BILLING VERISON: {_version}')
+    print(f'OPERR BILLING VERSION: {_version}')
 
     def run():
         SQ = mysqlite('EDI.db')
