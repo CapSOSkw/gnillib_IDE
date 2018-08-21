@@ -1095,6 +1095,7 @@ class SignoffAndCompare:
 
         data_in_total = mas_2_df[mas_2_df['Invoice Number'].isin(total_job_df['TripID'])]
         invoice_list_in_total = data_in_total['Invoice Number'].tolist()
+        # print(invoice_list_in_total)
 
         total_job_df['Codes'] = ""
         total_job_df['MAS amount'] = ""
@@ -1150,6 +1151,7 @@ class SignoffAndCompare:
             return result
 
         def get_leg_status(x):    # if invoice number in total jobs, assign leg status 0
+            # print(x, type(x))
             if x in invoice_list_in_total:
 
                 return 0
@@ -7353,7 +7355,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_smisome1, operr_billing_3d, operr_billing_dom]
     random_idx = np.random.randint(0, len(fig_list)-1)
-    _version = "0.8.20"
+    _version = "0.8.21"
 
 
     print(fig_list[random_idx])
