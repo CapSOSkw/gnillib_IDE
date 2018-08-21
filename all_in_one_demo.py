@@ -1095,6 +1095,7 @@ class SignoffAndCompare:
 
         data_in_total = mas_2_df[mas_2_df['Invoice Number'].isin(total_job_df['TripID'])]
         invoice_list_in_total = data_in_total['Invoice Number'].tolist()
+        # print(invoice_list_in_total)
 
         total_job_df['Codes'] = ""
         total_job_df['MAS amount'] = ""
@@ -1150,6 +1151,7 @@ class SignoffAndCompare:
             return result
 
         def get_leg_status(x):    # if invoice number in total jobs, assign leg status 0
+            # print(x, type(x))
             if x in invoice_list_in_total:
 
                 return 0
