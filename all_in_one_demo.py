@@ -7355,7 +7355,7 @@ if __name__ == '__main__':
 
     fig_list = [operr_billing, operr_billing3_D, operr_billing_smisome1, operr_billing_3d, operr_billing_dom]
     random_idx = np.random.randint(0, len(fig_list)-1)
-    _version = "0.8.20"
+    _version = "0.8.21"
 
 
     print(fig_list[random_idx])
