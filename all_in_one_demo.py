@@ -3323,8 +3323,13 @@ class Process_Method:
         payment_date = ""
 
         all_codes = []
-
+        row_ST = receipt_df.ix[2, 1]
         row_RPB = receipt_df.ix[3, 1]
+
+        try:
+            ID_835 = row_ST[2][:4]
+        except:
+            ID_835 = 'NA'
 
         try:
             payment_date = row_RPB[-1]
@@ -3394,7 +3399,7 @@ class Process_Method:
         result.ix[last_line+1, 'Claim Number'] = 'Payment Date:'
         result.ix[last_line + 1, 'Expected Amount'] = payment_date
 
-        file_name_835 = str(arrow.get().date()) + str(datetime.now().time().strftime("%H%M%S"))
+        file_name_835 = str(arrow.get().date()).replace("-", "") + str(datetime.now().time().strftime("%H%M%S"))
 
         current_path = os.getcwd()
         daily_folder = str(datetime.today().date())
@@ -3404,7 +3409,7 @@ class Process_Method:
             os.makedirs(file_saving_path)
             print('Save files to {0}'.format(file_saving_path))
 
-        result.to_excel(os.path.join(file_saving_path, f'835-Decoding-{payment_date}-${paid_amount_value}-' + file_name_835 + '.xlsx'), index=False)
+        result.to_excel(os.path.join(file_saving_path, f'835-{ID_835}-{payment_date}-${format(paid_amount_value, ".2f")}-' + file_name_835 + '.xlsx'), index=False)
 
     @staticmethod
     def generate_processed_MAS(mas_raw_data):
