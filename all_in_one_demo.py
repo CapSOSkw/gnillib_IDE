@@ -502,7 +502,7 @@ class EDI837P:
         N3 = ["N3", address.upper()]
         N4 = ["N4", city.upper(), state.upper(), str(zipcode)]
         DMG = ["DMG", "D8", str(dob), gender]
-
+        # print(NM1, N3, N4, DMG)
         return '*'.join(NM1) + "~" + '*'.join(N3) + "~" + '*'.join(N4) + "~" + '*'.join(DMG) + "~" # subscriber name
 
     def loop2010bb(self):
