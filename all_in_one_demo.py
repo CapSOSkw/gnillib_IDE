@@ -1381,9 +1381,9 @@ class SignoffAndCompare:
                     unit = pa_roast_df.ix[i, 'Qty']
                     # print(invoice_num)
                     if code == 'A0100':
-                        temp_encode_pa[0] = int(unit)
+                        temp_encode_pa[0] = int(unit)if unit != "" else 0
                     elif code == 'A0100TN':
-                        temp_encode_pa[1] = int(unit)
+                        temp_encode_pa[1] = int(unit) if unit != "" else 0
                     elif code == 'S0215':
                         temp_encode_pa[2] = unit if unit != "" else 0
                     elif code == 'S0215TN':
@@ -7267,7 +7267,6 @@ class BYDLookBack:
                 else:
                     pass
 
-
             if 'replace' in temp_howTo:
                 howTo.append('Replace')
 
@@ -7277,6 +7276,7 @@ class BYDLookBack:
             elif 'ok' in temp_howTo and not 'reclaim' in temp_howTo and not 'replace' in temp_howTo:
                 howTo.append('OKAY')
 
+        # print(len(PA), len(howTo))
         result_df['Service Date'] = serviceDate
         result_df['CIN'] = CIN
         result_df['PA Number'] = PA
@@ -7332,7 +7332,7 @@ class BYDLookBack:
                 print(f'No {decision} claims in file!')
                 continue
 
-            denied_df['PA Number'] = denied_df['PA Number'].astype(int)
+            denied_df['PA Number'] = denied_df['PA Number'].apply(lambda x: int(x))
 
             pa_df = pd.read_table(self.PA_Roster) if self.PA_Roster.endswith('.txt') else pd.read_excel(self.PA_Roster)
             pa_df['Prior Approval Number'] = pa_df['Prior Approval Number'].apply(
@@ -7858,7 +7858,6 @@ if __name__ == '__main__':
     random_idx = np.random.randint(0, len(fig_list)-1)
     _version = "0.8.26"
 
-
     print(fig_list[random_idx])
     print('\n')
     print(f'OPERR BILLING VERSION: {_version}')
@@ -7871,11 +7870,4 @@ if __name__ == '__main__':
         SQ.conn.close()
         sys.exit(app.exec_())
     run()
-
-    # look = LookBack_standard('NY minute Test/02-01-2018-05-02-2018 LOOK BACK.xlsx', 'NY minute Test/NY minute PA Roster 02-01-2018-05-02-2018 .xlsx', 'NY minute Test/NY minute Processed MAS 02-01-2018-2018-05-02.xlsx', read_from_processedMAS=True)
-    # look.useFilesTo837()
-
-    # byd = BYDLookBack(BYDMedBatch_file='6-9.xlsx', PA_Roster='Roster-Export-0601-2017-0927-2017.txt', Vendor='BYD 6_9 VENDER.xlsx')
-    # # byd.BYDReplaceOrReclaim()
-    # byd.useFilesTo837Ps()
 
