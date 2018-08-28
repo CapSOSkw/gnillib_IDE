@@ -416,7 +416,6 @@ class EDI837P:
         else:
             self.file_name = '837-' + re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file)[0]  if re.findall(r'\d{4}-\d{2}-\d{2}-to-\d{4}-\d{2}-\d{2}', file).__len__() != 0 else '837-' + str(datetime.today().date())
 
-
         self.today_datetime = arrow.now().datetime
         self.delayDate_line = arrow.now().shift(days=-90).datetime
 
@@ -6753,7 +6752,7 @@ class MASProtocol:
         return correct, error
 
 
-# LookBack for 'New Bell'
+# Given EPaces PA file, we can generate 837P file.
 class LookBack:
     def __init__(self, Epaces_PA, MAS_PA, MAS_vendor):
         self.Epaces_PA = Epaces_PA
@@ -6935,8 +6934,8 @@ class LookBack:
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
 
-# Standard Lookback. Given PA numbers from other bases, we can find invoice numbers in MAS PA roster, then use invoice
-# numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P).
+# Standard Lookback. Given PA numbers only from other bases, we can find invoice numbers in MAS PA roster, then use invoice
+# numbers to find info from MAS Vendors, output 837P finally(Stuff should double check 837P file)
 class LookBack_standard:
     def __init__(self, PA, MAS_PA, MAS_vendor, read_from_processedMAS=False):
         '''
@@ -7190,6 +7189,9 @@ class LookBack_standard:
         edi_837_df.to_excel(os.path.join(file_saving_path, '837P Lookback Data.xlsx'), index=False)
 
 
+# BYD LookBack functions. Support Medybatch report.
+# Both of MAS PA roster files and MAS vendors should merge into one file, respectively.
+# Currently, we can only process RECLAIM & REPLACE.
 class BYDLookBack:
     def __init__(self, BYDMedBatch_file, PA_Roster=None, Vendor=None):
         self.BYDMedBatch_file = BYDMedBatch_file
@@ -7277,6 +7279,10 @@ class BYDLookBack:
                 howTo.append('OKAY')
 
         # print(len(PA), len(howTo))
+
+        if len(PA) != len(howTo):
+            logging.critical('Error! PA number data are incorrect possibly.')
+
         result_df['Service Date'] = serviceDate
         result_df['CIN'] = CIN
         result_df['PA Number'] = PA
