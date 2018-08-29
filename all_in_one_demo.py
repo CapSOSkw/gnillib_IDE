@@ -5109,7 +5109,7 @@ class subwindow_addbase(QMainWindow):
             self.tab2.setLayout(self.tab2.layout)
 
         def createBase2DB(self):
-            basename = self.textbox1.text()
+            basename = self.textbox1.text().strip()
             baseaddress = self.textbox2.text()
             city = self.textbox3.text()
             state = self.state_combobox.currentText()
@@ -6760,6 +6760,7 @@ class LookBack:
         self.epaces_df = self.extractReclaim()
 
         self.MAS_PA_df = pd.read_excel(MAS_PA)
+        self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
         self.MAS_vendor = pd.read_excel(MAS_vendor)
         # print('init')
 
