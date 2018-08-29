@@ -582,9 +582,12 @@ class EDI837P:
             SV1_04 = str(int(unit))
         else:
             SV1_04 = str(unit)
+        # print(amount, type(amount))
+
+
 
         LX1 = ["LX", "1"]
-        SV1 = ["SV1", SV1_01, str(amount), "UN", SV1_04, "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV1 = ["SV1", SV1_01, format(amount, '.2f'), "UN", SV1_04, "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX1) + "~" + '*'.join(SV1) + "~" + '*'.join(DTP) + "~"
@@ -602,7 +605,7 @@ class EDI837P:
             SV2_04 = str(unit)
 
         LX2 = ["LX", "2"]
-        SV2 = ["SV1", SV2_01, str(amount), "UN", SV2_04, "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV2 = ["SV1", SV2_01, format(amount, '.2f'), "UN", SV2_04, "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX2) + "~" + '*'.join(SV2) + "~" + '*'.join(DTP) + "~"
@@ -621,7 +624,7 @@ class EDI837P:
             SV3_04 = str(unit)
 
         LX3 = ["LX", "3"]
-        SV3 = ["SV1", SV3_01, str(amount), "UN", SV3_04 , "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV3 = ["SV1", SV3_01, format(amount, '.2f'), "UN", SV3_04 , "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX3) + "~" + '*'.join(SV3) + "~" + '*'.join(DTP) + "~"
@@ -639,7 +642,7 @@ class EDI837P:
             SV4_04 = str(unit)
 
         LX4 = ["LX", "4"]
-        SV4 = ["SV1", SV4_01, str(amount), "UN", SV4_04, "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV4 = ["SV1", SV4_01, format(amount, '.2f'), "UN", SV4_04, "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX4) + "~" + '*'.join(SV4) + "~" + '*'.join(DTP) + "~"
@@ -657,7 +660,7 @@ class EDI837P:
             SV5_04 = str(unit)
 
         LX5 = ["LX", "5"]
-        SV5 = ["SV1", SV5_01, str(amount), "UN", SV5_04, "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV5 = ["SV1", SV5_01, format(amount, '.2f'), "UN", SV5_04, "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX5) + "~" + '*'.join(SV5) + "~" + '*'.join(DTP) + "~"
@@ -675,7 +678,7 @@ class EDI837P:
             SV6_04 = str(unit)
 
         LX6 = ["LX", "6"]
-        SV6 = ["SV1", SV6_01, str(amount), "UN", SV6_04, "", "", "1", "", "", "", "", "", "", "", "0"]
+        SV6 = ["SV1", SV6_01, format(amount, '.2f'), "UN", SV6_04, "", "", "1", "", "", "", "", "", "", "", "0"]
         DTP = ["DTP", "472", "D8", service_date]
 
         return '*'.join(LX6) + "~" + '*'.join(SV6) + "~" + '*'.join(DTP) + "~"
@@ -6628,6 +6631,41 @@ class MASProtocol:
 
         self.df = self.df.loc[self.df['LEG STATUS'] == 0]   # Read only the legs that we've finished
 
+        self.statusCodes = {
+            '3000': 'Driver Failure',
+            '3001': 'Incorrect ProviderNumber',
+            '3002': 'Invalid Expiration date',
+            '3004': 'Full Driver Name Missing',
+            '3005': 'Invalid Motorist ID',
+            '3006': 'Invalid Driver Status (Must be 0 or 1)',
+            '3010': 'Vehicle Failure',
+            '3014': 'Full VehicleNameNeeded',
+            '3015': 'Invalid Registration ID',
+            '3016': 'Invalid Vehicle Type',
+            '3018': 'Invalid Vehicle Status (Must be 0 or 1)',
+            '3021': 'No Trips Found matching current Criteria',
+            '3022': 'Invalid Invoice Number',
+            '3023': 'Invalid Start Date',
+            '3024': 'Invalid Leg Status',
+            '3025': 'Quantity Exceeds Maximum',
+            '3026': 'Current Open Corrections for this Invoice',
+            '3100': 'Session Not Found. The sessionIdentifier does not match an existing session. The call could not be completed',
+            '3101': 'SessionIdentifier Missing',
+            '3102': 'Invalid SessionIdentifier',
+            '3501': 'Invoice Number not in System',
+            '3502': 'Invoice no longer in Eligible Status',
+            '3503': 'Invoice not finalized, or has already been attested to',
+            '3504': 'Invoice trip date is after current date',
+            '3505': 'Leg Number no longer on file',
+            '3506': 'Vehicle not in System',
+            '3507': 'Vehicle Registration has expired',
+            '3508': 'Driver not in System',
+            '3509': 'Secondary Services Quantity invalid',
+            '3510': 'Secondary Service Quantity exceeds Maximum Allowable',
+            '3511': 'Secondary Services included, with no quantity supplied',
+            '3530': 'Invoice Leg data corrupted',
+        }
+
     def _makeStartSession(self):
         xml = []
 
@@ -6736,6 +6774,13 @@ class MASProtocol:
             root = ET.fromstring(response.text.encode('utf-8'))
             correct = root.findall('.//InvoicesCorrect')[0].text
             error = root.findall('.//InvoiceErrors')[0].text
+
+            for i in range(len(root.findall('.//invoicenumber'))):
+                if root.findall('.//UpdateStatus')[i].text in self.statusCodes.keys():
+                    logging.error(f'\nFailed: {root.findall(".//invoicenumber")[i].text};\nReason: {self.statusCodes[root.findall(".//UpdateStatus")[i].text]}.\n')
+
+                else:
+                    continue
 
             # print(f'Success: {correct};\nFailure (Or already attested): {error}')
             logging.info(f'\nSuccess: {correct};\nFailure (Or already attested): {error}')
@@ -7605,7 +7650,6 @@ class BYDLookBack:
 
             edi_837_df = pd.DataFrame.from_dict(edi_837_dict, 'index')
             edi_837_df.to_excel(os.path.join(file_saving_path, f'BYD 837P FOR {decision} .xlsx'), index=False)
-
 
 
 
