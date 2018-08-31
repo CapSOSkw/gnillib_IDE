@@ -256,6 +256,7 @@ class EDI270:
 
         return ISA + GS + ST_SE + GE + IEA
 
+
 #Generate EDI 276
 class EDI276:
 
@@ -6805,7 +6806,10 @@ class LookBack:
         self.epaces_df = self.extractReclaim()
 
         self.MAS_PA_df = pd.read_excel(MAS_PA)
-        self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
+        try:
+            self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
+        except:
+            pass
         self.MAS_vendor = pd.read_excel(MAS_vendor)
         # print('init')
 
@@ -6932,7 +6936,7 @@ class LookBack:
                     # read driver_info
                     # read database
                     # print('read drivers')
-
+                    # print(info_locker.driver_information)
                     driver_info_keys = list(info_locker.driver_information.keys())
                     random_idx = random.randint(0, len(driver_info_keys)-1)
 
@@ -6994,7 +6998,10 @@ class LookBack_standard:
         self.PA_list = self.PA_df['Prior #'].astype(int).unique().tolist()
 
         self.MAS_PA_df = pd.read_table(MAS_PA) if MAS_PA.endswith('.txt') else pd.read_excel(MAS_PA)
-        self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
+        try:
+            self.MAS_PA_df['Prior Approval Number'] = self.MAS_PA_df['Prior Approval Number'].apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x).__len__() > 0 else 0)
+        except:
+            pass
 
 
         # self.MAS_raw_data = pd.read_table(MAS_vendor) if MAS_vendor.endswith('.txt') else pd.read_excel(MAS_vendor)
